@@ -1,0 +1,28 @@
+@use 'variables' as *;
+
+:root,
+[data-theme='light'] {
+  --color-bg: #{$light-bg};
+  --color-surface: #{$light-surface};
+  --color-surface-elevated: #{$light-surface-elevated};
+  --color-text: #{$light-text};
+  --color-text-secondary: #{$light-text-secondary};
+  --color-text-muted: #{$light-text-muted};
+  --color-border: #{$light-border};
+  --color-primary: #{$light-primary};
+  --color-primary-contrast: #ffffff;
+  --color-overlay: rgba(15, 22, 18, 0.4);
+}
+
+[data-theme='dark'] {
+  --color-bg: #{$dark-bg};
+  --color-surface: #{$dark-surface};
+  --color-surface-elevated: #{$dark-surface-elevated};
+  --color-text: #{$dark-text};
+  --color-text-secondary: #{$dark-text-secondary};
+  --color-text-muted: #{$dark-text-muted};
+  --color-border: #{$dark-border};
+  --color-primary: #{$dark-primary};
+  --color-primary-contrast: #{$dark-bg};
+  --color-overlay: rgba(0, 0, 0, 0.5);
+}
