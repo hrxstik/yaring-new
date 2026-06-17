@@ -5,7 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { createSqlJsConfig } from '@app/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { EmailService } from './email.service';
+import { SmsService } from './sms.service';
 import { UserEntity } from './entities/user.entity';
 import { VerificationCodeEntity } from './entities/verification-code.entity';
 
@@ -25,6 +25,6 @@ const authEntities = [UserEntity, VerificationCodeEntity];
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, EmailService],
+  providers: [AuthService, SmsService],
 })
 export class AuthModule {}

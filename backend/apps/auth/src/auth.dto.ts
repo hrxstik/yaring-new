@@ -1,13 +1,16 @@
 import {
-  IsEmail,
   IsString,
   MinLength,
   Length,
+  Matches,
 } from 'class-validator';
 
+const PHONE_PATTERN = /^\+?[0-9\s\-()]{10,20}$/;
+
 export class RegisterDto {
-  @IsEmail()
-  email!: string;
+  @IsString()
+  @Matches(PHONE_PATTERN, { message: 'Укажите корректный телефон' })
+  phone!: string;
 
   @IsString()
   @MinLength(6)
@@ -19,16 +22,18 @@ export class RegisterDto {
 }
 
 export class LoginDto {
-  @IsEmail()
-  email!: string;
+  @IsString()
+  @Matches(PHONE_PATTERN, { message: 'Укажите корректный телефон' })
+  phone!: string;
 
   @IsString()
   password!: string;
 }
 
-export class VerifyEmailDto {
-  @IsEmail()
-  email!: string;
+export class VerifyPhoneDto {
+  @IsString()
+  @Matches(PHONE_PATTERN, { message: 'Укажите корректный телефон' })
+  phone!: string;
 
   @IsString()
   @Length(6, 6)
@@ -36,6 +41,7 @@ export class VerifyEmailDto {
 }
 
 export class ResendCodeDto {
-  @IsEmail()
-  email!: string;
+  @IsString()
+  @Matches(PHONE_PATTERN, { message: 'Укажите корректный телефон' })
+  phone!: string;
 }

@@ -34,20 +34,19 @@ useHead({ title: 'Страницы — Админка' });
 
 const { request } = useApi();
 
-const pageSlugs = ['prices', 'contacts', 'rules', 'privacy'] as const;
+const pageSlugs = ['contacts', 'rules', 'privacy'] as const;
 const slugLabels: Record<string, string> = {
-  prices: 'Цены',
   contacts: 'Контакты',
   rules: 'Правила',
   privacy: 'Политика',
 };
 
-const activeSlug = ref<(typeof pageSlugs)[number]>('prices');
+const activeSlug = ref<(typeof pageSlugs)[number]>('contacts');
 const page = ref<ContentPage | null>(null);
 const saving = ref(false);
 const message = ref<string | null>(null);
 
-onMounted(() => selectPage('prices'));
+onMounted(() => selectPage('contacts'));
 
 async function selectPage(slug: (typeof pageSlugs)[number]) {
   activeSlug.value = slug;

@@ -4,7 +4,7 @@ import {
   LoginDto,
   RegisterDto,
   ResendCodeDto,
-  VerifyEmailDto,
+  VerifyPhoneDto,
 } from './auth.dto';
 
 @Controller()
@@ -15,22 +15,27 @@ export class AuthController {
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
-    return this.auth.register(dto.email, dto.password, dto.name);
+    return this.auth.register(dto.phone, dto.password, dto.name);
   }
 
-  @Post('verify-email')
-  verifyEmail(@Body() dto: VerifyEmailDto) {
-    return this.auth.verifyEmail(dto.email, dto.code);
+  @Post('verify-phone')
+  verifyPhone(@Body() dto: VerifyPhoneDto) {
+    return this.auth.verifyPhone(dto.phone, dto.code);
   }
 
   @Post('resend-code')
   resendCode(@Body() dto: ResendCodeDto) {
-    return this.auth.resendCode(dto.email);
+    return this.auth.resendCode(dto.phone);
   }
 
   @Post('login')
   login(@Body() dto: LoginDto) {
-    return this.auth.login(dto.email, dto.password);
+    return this.auth.login(dto.phone, dto.password);
+  }
+
+  @Post('test-user')
+  createTestUser(@Body() dto: RegisterDto) {
+    return this.auth.createTestUser(dto.phone, dto.password, dto.name);
   }
 
   @Get('me')

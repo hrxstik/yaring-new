@@ -12,6 +12,7 @@
     "start:booking": "nest start booking --watch",
     "start:payment": "nest start payment --watch",
     "start:all": "concurrently \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:catalog\" \"npm run start:booking\" \"npm run start:payment\"",
+    "start:e2e": "concurrently \"cross-env E2E_TEST_MODE=1 GATEWAY_PORT=4100 AUTH_SERVICE_URL=http://127.0.0.1:4101 CATALOG_SERVICE_URL=http://127.0.0.1:4102 BOOKING_SERVICE_URL=http://127.0.0.1:4103 PAYMENT_SERVICE_URL=http://127.0.0.1:4104 FRONTEND_URL=http://127.0.0.1:3100 npm run start:gateway\" \"cross-env E2E_TEST_MODE=1 AUTH_PORT=4101 npm run start:auth\" \"cross-env E2E_TEST_MODE=1 CATALOG_PORT=4102 npm run start:catalog\" \"cross-env E2E_TEST_MODE=1 BOOKING_PORT=4103 CATALOG_SERVICE_URL=http://127.0.0.1:4102 npm run start:booking\" \"cross-env E2E_TEST_MODE=1 PAYMENT_PORT=4104 BOOKING_SERVICE_URL=http://127.0.0.1:4103 npm run start:payment\"",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "lint": "eslint \"{apps,libs}/**/*.ts\" --fix"
   },
@@ -42,11 +43,13 @@
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "concurrently": "^9.1.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^17.0.0",
     "prettier": "^3.4.2",
+    "ts-loader": "^9.6.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   }

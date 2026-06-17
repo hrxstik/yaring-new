@@ -1,8 +1,8 @@
 <template>
   <header class="header">
     <div class="header__inner">
-      <NuxtLink to="/" class="header__logo">
-        <Trees :size="28" />
+      <NuxtLink to="/" class="header__logo" @click="menuOpen = false">
+        <Trees :size="26" />
         <span>Яринг</span>
       </NuxtLink>
 
@@ -16,22 +16,37 @@
         >
           {{ link.label }}
         </NuxtLink>
+        <div class="header__nav-mobile">
+          <ThemeToggle />
+          <NuxtLink v-if="auth.isAdmin" to="/admin" class="header__link" @click="menuOpen = false">
+            Админка
+          </NuxtLink>
+          <NuxtLink v-if="!auth.isLoggedIn" to="/login" @click="menuOpen = false">
+            <AppButton block>Войти</AppButton>
+          </NuxtLink>
+        </div>
       </nav>
 
       <div class="header__actions">
-        <ThemeToggle />
+        <ThemeToggle class="header__theme" />
         <NuxtLink v-if="auth.isAdmin" to="/admin" class="header__link header__link--admin">
           Админ
         </NuxtLink>
-        <NuxtLink v-if="auth.isLoggedIn" to="/profile" class="header__profile">
+        <NuxtLink
+          v-if="auth.isLoggedIn"
+          to="/profile"
+          class="header__profile"
+          aria-label="Личный кабинет"
+        >
           <User :size="20" />
         </NuxtLink>
-        <NuxtLink v-else to="/login">
-          <AppButton size="sm" variant="secondary">Войти</AppButton>
+        <NuxtLink v-else to="/login" class="header__login">
+          <AppButton size="sm">Войти</AppButton>
         </NuxtLink>
         <button
           type="button"
           class="header__burger"
+          :aria-expanded="menuOpen"
           aria-label="Меню"
           @click="menuOpen = !menuOpen"
         >
@@ -51,7 +66,6 @@ const menuOpen = ref(false);
 
 const navLinks = [
   { to: '/', label: 'Главная' },
-  { to: '/prices', label: 'Цены' },
   { to: '/booking', label: 'Бронирование' },
   { to: '/rules', label: 'Правила' },
   { to: '/contacts', label: 'Контакты' },
@@ -63,76 +77,141 @@ const navLinks = [
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  height: $header-height;
+  background: transparent;
+  padding: $space-3 0;
 
   &__inner {
     @include container;
-    height: 100%;
-    display: flex;
+    height: var(--header-height);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: $space-4;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-elevated);
+    backdrop-filter: blur(16px);
+
+    [data-theme='dark'] & {
+      background: rgba(26, 36, 32, 0.9);
+    }
+
+    @include md {
+      grid-template-columns: auto 1fr auto;
+    }
   }
 
   &__logo {
     display: flex;
     align-items: center;
     gap: $space-2;
-    font-size: $font-size-lg;
-    font-weight: 600;
+    font-size: var(--font-lg);
+    font-weight: 800;
     color: var(--color-primary);
     text-decoration: none;
 
     &:hover {
       text-decoration: none;
+      opacity: 0.85;
     }
   }
 
   &__nav {
     display: none;
-    gap: $space-5;
-    margin-left: auto;
+    align-items: center;
+    justify-content: center;
+    gap: $space-6;
 
-    @include lg {
+    @include md {
       display: flex;
     }
 
     &--open {
       display: flex;
       flex-direction: column;
-      position: absolute;
-      top: $header-height;
+      align-items: stretch;
+      position: fixed;
+      top: calc(var(--header-height) + #{$space-6});
       left: 0;
       right: 0;
+      bottom: 0;
       background: var(--color-surface);
-      padding: $space-4;
-      border-bottom: 1px solid var(--color-border);
+      padding: $space-5 var(--space-page-x);
+      gap: $space-2;
+      overflow-y: auto;
+      z-index: 40;
 
-      @include lg {
+      @include md {
         position: static;
         flex-direction: row;
+        align-items: center;
+        justify-content: center;
         padding: 0;
-        border: none;
+        overflow: visible;
+        background: transparent;
+        inset: auto;
       }
     }
   }
 
+  &__nav-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    margin-top: $space-5;
+    padding-top: $space-5;
+    border-top: 1px solid var(--color-border);
+
+    @include md {
+      display: none;
+    }
+  }
+
   &__link {
+    position: relative;
     color: var(--color-text-secondary);
     text-decoration: none;
-    font-size: $font-size-sm;
+    font-size: var(--font-sm);
+    font-weight: 500;
+    padding: $space-2 0;
+    white-space: nowrap;
 
-    &:hover,
-    &.router-link-active {
+    @include md {
+      padding: $space-2 0;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      background: var(--color-primary);
+      border-radius: 2px;
+      transform: scaleX(0);
+      transition: transform $transition;
+    }
+
+    &:hover {
       color: var(--color-primary);
       text-decoration: none;
+    }
+
+    &.router-link-exact-active {
+      color: var(--color-primary);
+      text-decoration: none;
+
+      &::after {
+        transform: scaleX(1);
+      }
     }
 
     &--admin {
       display: none;
 
-      @include md {
+      @include sm {
         display: inline;
       }
     }
@@ -141,11 +220,19 @@ const navLinks = [
   &__actions {
     display: flex;
     align-items: center;
-    gap: $space-3;
-    margin-left: auto;
+    justify-content: flex-end;
+    gap: $space-2;
 
-    @include lg {
-      margin-left: 0;
+    @include md {
+      gap: $space-3;
+    }
+  }
+
+  &__theme {
+    display: none;
+
+    @include md {
+      display: flex;
     }
   }
 
@@ -153,16 +240,36 @@ const navLinks = [
     color: var(--color-text);
     display: flex;
     padding: $space-2;
+    border-radius: var(--radius-md);
+
+    &:hover {
+      background: var(--color-surface-elevated);
+      text-decoration: none;
+    }
+  }
+
+  &__login {
+    display: none;
+    text-decoration: none;
+
+    @include sm {
+      display: inline-flex;
+    }
   }
 
   &__burger {
     display: flex;
-    background: none;
-    border: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
     color: var(--color-text);
     cursor: pointer;
 
-    @include lg {
+    @include md {
       display: none;
     }
   }

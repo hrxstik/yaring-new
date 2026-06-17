@@ -12,7 +12,7 @@ export type PaymentStatus = 'pending' | 'succeeded' | 'cancelled' | 'failed';
 
 export interface JwtPayload {
   sub: string;
-  email: string;
+  phone: string;
   role: UserRole;
 }
 
@@ -50,10 +50,10 @@ export interface Booking {
 
 export interface UserProfile {
   id: string;
-  email: string;
+  phone: string;
   name: string;
   role: UserRole;
-  emailVerified: boolean;
+  phoneVerified: boolean;
   createdAt: string;
 }
 

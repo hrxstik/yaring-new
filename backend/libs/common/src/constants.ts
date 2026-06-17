@@ -12,14 +12,9 @@ export const BOOKING_RULES = {
 
 export const DEFAULT_CONTENT_PAGES = [
   {
-    slug: 'prices',
-    title: 'Цены',
-    body: '<p>Актуальные цены на размещение и услуги базы отдыха.</p>',
-  },
-  {
     slug: 'contacts',
     title: 'Контакты',
-    body: '<p>Телефон: +7 (900) 000-00-00<br>Email: info@yaring.ru<br>Адрес: Ленинградская область</p>',
+    body: '<p>Телефон: +7 (900) 000-00-00<br>Метка на карте стоит на точных координатах базы.</p>',
   },
   {
     slug: 'rules',

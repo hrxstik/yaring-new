@@ -5,7 +5,17 @@
       Выберите объект и укажите даты. Бронирование доступно после входа в аккаунт.
     </p>
 
-    <div v-if="loading" class="booking-page__loading">Загрузка объектов…</div>
+    <EntityCardSkeleton v-if="loading" :count="3" />
+
+    <AppAlert
+      v-else-if="loadError"
+      title="Объекты недоступны"
+      :message="loadError"
+    >
+      <template #actions>
+        <AppButton size="sm" @click="loadEntities">Повторить</AppButton>
+      </template>
+    </AppAlert>
 
     <div v-else class="booking-page__grid">
       <EntityCard
@@ -39,7 +49,7 @@
         <p class="booking-confirm__price">
           Итого: <strong>{{ estimatedPrice.toLocaleString('ru-RU') }} ₽</strong>
         </p>
-        <p v-if="error" class="booking-confirm__error">{{ error }}</p>
+        <AppAlert v-if="error" :message="error" />
       </div>
       <template #footer>
         <div class="booking-confirm__actions">
@@ -60,10 +70,12 @@ import { formatRange, formatTimeRange } from '~/utils/calendar';
 useHead({ title: 'Бронирование — Яринг' });
 
 const auth = useAuthStore();
-const { request } = useApi();
+const route = useRoute();
+const { request, formatApiError } = useApi();
 
 const entities = ref<BookableEntity[]>([]);
 const loading = ref(true);
+const loadError = ref<string | null>(null);
 const drawerOpen = ref(false);
 const confirmOpen = ref(false);
 const selectedEntity = ref<BookableEntity | null>(null);
@@ -78,13 +90,22 @@ const selection = reactive({
   endTime: undefined as string | undefined,
 });
 
-onMounted(async () => {
+onMounted(loadEntities);
+
+async function loadEntities() {
+  loading.value = true;
+  loadError.value = null;
   try {
     entities.value = await request<BookableEntity[]>('/entities');
+  } catch (e) {
+    entities.value = [];
+    loadError.value = formatApiError(e);
   } finally {
     loading.value = false;
   }
-});
+
+  await openEntityFromQuery();
+}
 
 const summaryText = computed(() => {
   if (!selectedEntity.value) return '';
@@ -111,8 +132,16 @@ const estimatedPrice = computed(() => {
 });
 
 async function openBooking(entity: BookableEntity) {
+  const target = entityBookingPath(entity);
+  if (route.fullPath !== target) {
+    await navigateTo(target, { replace: true });
+  }
+
   if (!auth.isLoggedIn) {
-    await navigateTo('/login?redirect=/booking');
+    await navigateTo({
+      path: '/login',
+      query: { redirect: target },
+    });
     return;
   }
 
@@ -139,6 +168,20 @@ async function openBooking(entity: BookableEntity) {
   drawerOpen.value = true;
 }
 
+async function openEntityFromQuery() {
+  const slug = route.query.entity;
+  if (typeof slug !== 'string') return;
+
+  const entity = entities.value.find((item) => item.slug === slug);
+  if (entity) {
+    await openBooking(entity);
+  }
+}
+
+function entityBookingPath(entity: BookableEntity) {
+  return `/booking?entity=${encodeURIComponent(entity.slug)}`;
+}
+
 function onSelectionApply(payload: {
   startDate: string;
   endDate: string;
@@ -154,7 +197,13 @@ function onSelectionApply(payload: {
 
 async function submitBooking() {
   if (!auth.isLoggedIn) {
-    await navigateTo('/login?redirect=/booking');
+    const target = selectedEntity.value
+      ? entityBookingPath(selectedEntity.value)
+      : '/booking';
+    await navigateTo({
+      path: '/login',
+      query: { redirect: target },
+    });
     return;
   }
   if (!selectedEntity.value || !selection.startDate) return;
@@ -196,7 +245,7 @@ async function submitBooking() {
       window.location.href = payment.confirmationUrl;
     }
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Ошибка бронирования';
+    error.value = formatApiError(e);
   } finally {
     submitting.value = false;
   }
@@ -214,11 +263,11 @@ async function submitBooking() {
     display: grid;
     gap: $space-5;
 
-    @include md {
+    @include sm {
       grid-template-columns: repeat(2, 1fr);
     }
 
-    @include lg {
+    @include md {
       grid-template-columns: repeat(3, 1fr);
     }
   }

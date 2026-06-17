@@ -27,9 +27,9 @@ export class GatewayController {
     });
   }
 
-  @Post('auth/verify-email')
-  verifyEmail(@Body() body: unknown) {
-    return this.proxy.forward('auth', '/verify-email', {
+  @Post('auth/verify-phone')
+  verifyPhone(@Body() body: unknown) {
+    return this.proxy.forward('auth', '/verify-phone', {
       method: 'POST',
       data: body,
     });
@@ -46,6 +46,14 @@ export class GatewayController {
   @Post('auth/login')
   login(@Body() body: unknown) {
     return this.proxy.forward('auth', '/login', {
+      method: 'POST',
+      data: body,
+    });
+  }
+
+  @Post('auth/test-user')
+  createTestUser(@Body() body: unknown) {
+    return this.proxy.forward('auth', '/test-user', {
       method: 'POST',
       data: body,
     });

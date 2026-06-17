@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import axios, { type AxiosRequestConfig } from 'axios';
+import { HttpException, Injectable } from '@nestjs/common';
+import axios, { AxiosError, type AxiosRequestConfig } from 'axios';
 
 @Injectable()
 export class ProxyService {
@@ -16,7 +16,14 @@ export class ProxyService {
     config: AxiosRequestConfig = {},
   ) {
     const url = `${this.services[service]}${path}`;
-    const { data } = await axios({ url, ...config });
-    return data;
+    try {
+      const { data } = await axios({ url, ...config });
+      return data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response) {
+        throw new HttpException(error.response.data, error.response.status);
+      }
+      throw error;
+    }
   }
 }

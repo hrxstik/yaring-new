@@ -41,25 +41,27 @@ withDefaults(
 
   &--sm {
     padding: $space-2 $space-4;
-    font-size: $font-size-sm;
+    font-size: var(--font-sm);
   }
 
   &--primary {
     background: var(--color-primary);
     color: var(--color-primary-contrast);
+    box-shadow: 0 4px 14px rgba(61, 107, 79, 0.25);
 
     &:hover:not(:disabled) {
-      opacity: 0.9;
+      opacity: 0.92;
+      transform: translateY(-1px);
     }
   }
 
   &--secondary {
-    background: var(--color-surface-elevated);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
 
     &:hover:not(:disabled) {
-      border-color: var(--color-primary);
+      background: rgba(61, 107, 79, 0.08);
     }
   }
 
@@ -80,6 +82,7 @@ withDefaults(
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
   }
 
   &__spinner {

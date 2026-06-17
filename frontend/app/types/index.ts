@@ -2,10 +2,10 @@ export type UserRole = 'user' | 'admin';
 
 export interface User {
   id: string;
-  email: string;
+  phone: string;
   name: string;
   role: UserRole;
-  emailVerified: boolean;
+  phoneVerified: boolean;
   createdAt: string;
 }
 

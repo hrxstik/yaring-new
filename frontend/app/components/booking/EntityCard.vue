@@ -1,55 +1,95 @@
 <template>
   <article class="entity-card">
     <div class="entity-card__image">
-      <img v-if="entity.imageUrl" :src="entity.imageUrl" :alt="entity.name" />
+      <img v-if="imageSrc" :src="imageSrc" :alt="entity.name" loading="lazy" />
       <div v-else class="entity-card__placeholder">
         <Home :size="48" />
       </div>
     </div>
     <div class="entity-card__body">
-      <div class="entity-card__meta">
-        <span class="entity-card__type">
-          {{ entity.bookingType === 'daily' ? 'Посуточно' : 'Почасово' }}
-        </span>
-        <span class="entity-card__capacity">
-          <Users :size="14" /> до {{ entity.capacity }}
-        </span>
-      </div>
       <h3 class="entity-card__title">{{ entity.name }}</h3>
-      <p class="entity-card__desc">{{ entity.description }}</p>
       <ul v-if="entity.amenities.length" class="entity-card__amenities">
-        <li v-for="item in entity.amenities.slice(0, 4)" :key="item">{{ item }}</li>
+        <li v-for="item in entity.amenities" :key="item">
+          <component :is="amenityIcon(item)" :size="15" />
+          {{ item }}
+        </li>
       </ul>
-      <div class="entity-card__footer">
-        <span class="entity-card__price">{{ priceLabel }}</span>
-        <AppButton size="sm" @click="$emit('book', entity)">Забронировать</AppButton>
-      </div>
+      <p class="entity-card__price">{{ priceLabel }}</p>
+      <AppButton block @click="$emit('book', entity)">Забронировать</AppButton>
     </div>
   </article>
 </template>
 
 <script setup lang="ts">
-import { Home, Users } from 'lucide-vue-next';
+import {
+  BedDouble,
+  Car,
+  DoorOpen,
+  Flame,
+  Home,
+  Lamp,
+  ShowerHead,
+  TreePine,
+  Users,
+  Utensils,
+  Wifi,
+} from 'lucide-vue-next';
 import type { BookableEntity } from '~/types';
 
 const props = defineProps<{ entity: BookableEntity }>();
 defineEmits<{ book: [entity: BookableEntity] }>();
 
+const placeholders: Record<string, string> = {
+  'domik-u-ozera': '/entity-cottage.png',
+  banya: '/entity-sauna.png',
+  besedka: '/entity-gazebo.png',
+};
+
+const imageSrc = computed(() => {
+  if (props.entity.imageUrl?.startsWith('http')) return props.entity.imageUrl;
+  return placeholders[props.entity.slug] ?? null;
+});
+
 const priceLabel = computed(() => {
   if (props.entity.bookingType === 'hourly') {
-    return `от ${props.entity.pricePerHour?.toLocaleString('ru-RU')} ₽/ч`;
+    const hours = props.entity.slug === 'banya' ? 2 : 3;
+    const total = (props.entity.pricePerHour ?? 0) * hours;
+    return `от ${total.toLocaleString('ru-RU')} ₽ / ${hours} ч`;
   }
-  return `от ${props.entity.pricePerDay.toLocaleString('ru-RU')} ₽/сут`;
+  return `от ${props.entity.pricePerDay.toLocaleString('ru-RU')} ₽ / сутки`;
 });
+
+function amenityIcon(item: string) {
+  const value = item.toLowerCase();
+  if (value.includes('гост')) return Users;
+  if (value.includes('спаль')) return BedDouble;
+  if (value.includes('кух')) return Utensils;
+  if (value.includes('wi-fi') || value.includes('wifi')) return Wifi;
+  if (value.includes('парков')) return Car;
+  if (value.includes('мангал')) return Flame;
+  if (value.includes('душ')) return ShowerHead;
+  if (value.includes('освещ')) return Lamp;
+  if (value.includes('террас') || value.includes('вид') || value.includes('озер')) return TreePine;
+  return DoorOpen;
+}
 </script>
 
 <style scoped lang="scss">
 .entity-card {
-  @include card;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding: 0;
+  box-shadow: var(--shadow-card);
+  transition: transform $transition, box-shadow $transition;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-elevated);
+  }
 
   &__image {
     aspect-ratio: 16 / 10;
@@ -76,69 +116,43 @@ const priceLabel = computed(() => {
     display: flex;
     flex-direction: column;
     flex: 1;
-  }
-
-  &__meta {
-    display: flex;
     gap: $space-3;
-    margin-bottom: $space-2;
-    font-size: $font-size-xs;
-    color: var(--color-text-muted);
-  }
-
-  &__type {
-    color: var(--color-primary);
-    font-weight: 500;
-  }
-
-  &__capacity {
-    display: flex;
-    align-items: center;
-    gap: $space-1;
   }
 
   &__title {
-    margin-bottom: $space-2;
-  }
-
-  &__desc {
-    font-size: $font-size-sm;
-    color: var(--color-text-secondary);
-    flex: 1;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-size: var(--font-base);
+    font-weight: 700;
+    margin: 0;
   }
 
   &__amenities {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $space-2;
     list-style: none;
     padding: 0;
-    margin: $space-4 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    flex: 1;
 
     li {
-      font-size: $font-size-xs;
-      padding: $space-1 $space-2;
-      background: var(--color-surface-elevated);
-      border-radius: $radius-full;
+      display: flex;
+      align-items: center;
+      gap: $space-2;
+      font-size: var(--font-sm);
       color: var(--color-text-secondary);
+
+      svg {
+        color: var(--color-primary);
+        flex-shrink: 0;
+      }
     }
   }
 
-  &__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: $space-3;
-    margin-top: auto;
-  }
-
   &__price {
-    font-weight: 600;
+    font-size: var(--font-lg);
+    font-weight: 700;
     color: var(--color-primary);
+    margin: auto 0 0;
   }
 }
 </style>

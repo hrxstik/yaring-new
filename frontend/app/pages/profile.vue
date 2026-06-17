@@ -4,7 +4,7 @@
       <div>
         <h1>Личный кабинет</h1>
         <p v-if="auth.user" class="profile-page__user">
-          {{ auth.user.name }} · {{ auth.user.email }}
+          {{ auth.user.name }} · {{ auth.user.phone }}
         </p>
       </div>
       <AppButton variant="secondary" size="sm" @click="logout">Выйти</AppButton>
@@ -16,7 +16,25 @@
 
     <section class="profile-page__section">
       <h2>Мои бронирования</h2>
-      <p v-if="loading">Загрузка…</p>
+
+      <div v-if="loading" class="profile-page__skeletons">
+        <div v-for="n in 2" :key="n" class="profile-page__skeleton-item">
+          <AppSkeleton variant="title" width="40%" />
+          <AppSkeleton width="60%" />
+          <AppSkeleton width="30%" height="12px" />
+        </div>
+      </div>
+
+      <AppAlert
+        v-else-if="loadError"
+        title="Не удалось загрузить брони"
+        :message="loadError"
+      >
+        <template #actions>
+          <AppButton size="sm" @click="loadBookings">Повторить</AppButton>
+        </template>
+      </AppAlert>
+
       <p v-else-if="!bookings.length" class="profile-page__empty">
         У вас пока нет бронирований.
         <NuxtLink to="/booking">Забронировать</NuxtLink>
@@ -61,10 +79,11 @@ useHead({ title: 'Личный кабинет — Яринг' });
 
 const auth = useAuthStore();
 const route = useRoute();
-const { request } = useApi();
+const { request, formatApiError } = useApi();
 
 const bookings = ref<Booking[]>([]);
 const loading = ref(true);
+const loadError = ref<string | null>(null);
 
 onMounted(async () => {
   if (!auth.isLoggedIn) {
@@ -76,8 +95,12 @@ onMounted(async () => {
 
 async function loadBookings() {
   loading.value = true;
+  loadError.value = null;
   try {
     bookings.value = await request<Booking[]>('/bookings/my');
+  } catch (e) {
+    bookings.value = [];
+    loadError.value = formatApiError(e);
   } finally {
     loading.value = false;
   }
@@ -138,6 +161,22 @@ async function cancelBooking(id: string) {
     flex-direction: column;
     gap: $space-4;
     margin-top: $space-4;
+  }
+
+  &__skeletons {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+    margin-top: $space-4;
+  }
+
+  &__skeleton-item {
+    padding: $space-4;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
   }
 }
 

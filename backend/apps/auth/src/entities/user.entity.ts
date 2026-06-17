@@ -11,8 +11,8 @@ export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true })
-  email!: string;
+  @Column({ name: 'email', unique: true })
+  phone!: string;
 
   @Column()
   passwordHash!: string;
@@ -23,8 +23,8 @@ export class UserEntity {
   @Column({ type: 'varchar', default: 'user' })
   role!: UserRole;
 
-  @Column({ default: false })
-  emailVerified!: boolean;
+  @Column({ name: 'emailVerified', default: false })
+  phoneVerified!: boolean;
 
   @CreateDateColumn()
   createdAt!: Date;

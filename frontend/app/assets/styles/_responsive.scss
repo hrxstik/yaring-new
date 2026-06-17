@@ -1,0 +1,71 @@
+@use 'shared' as *;
+
+:root {
+  --space-page-x: #{$space-4};
+  --space-page-y: #{$space-6};
+  --space-section: #{$space-8};
+  --container-max: 100%;
+  --header-height: 64px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-base: 15px;
+  --font-lg: 17px;
+  --font-xl: 22px;
+  --font-2xl: 28px;
+  --font-3xl: 34px;
+  --font-hero: 32px;
+}
+
+@media (min-width: $bp-sm) {
+  :root {
+    --space-page-x: #{$space-5};
+    --space-page-y: #{$space-7};
+    --space-section: #{$space-9};
+    --header-height: 68px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --font-base: 16px;
+    --font-lg: 18px;
+    --font-xl: 24px;
+    --font-2xl: 32px;
+    --font-3xl: 40px;
+    --font-hero: 40px;
+  }
+}
+
+@media (min-width: $bp-md) {
+  :root {
+    --space-page-x: #{$space-6};
+    --space-page-y: #{$space-8};
+    --space-section: #{$space-10};
+    --container-max: 960px;
+    --header-height: 72px;
+    --radius-xl: 28px;
+    --font-2xl: 36px;
+    --font-3xl: 44px;
+    --font-hero: 48px;
+  }
+}
+
+@media (min-width: $bp-lg) {
+  :root {
+    --space-page-x: #{$space-7};
+    --container-max: 1200px;
+    --font-3xl: 48px;
+    --font-hero: 52px;
+  }
+}
+
+@media (min-width: $bp-xl) {
+  :root {
+    --space-page-x: #{$space-8};
+    --space-section: #{$space-11};
+    --container-max: 1360px;
+    --font-hero: 56px;
+    --font-3xl: 52px;
+  }
+}

@@ -5,7 +5,9 @@
       <AppButton size="sm" @click="openCreate">Добавить</AppButton>
     </div>
 
-    <div v-if="loading" class="admin-entities__loading">Загрузка…</div>
+    <div v-if="loading" class="admin-skeleton">
+      <AppSkeleton v-for="n in 5" :key="n" height="48px" />
+    </div>
 
     <table v-else class="admin-table">
       <thead>

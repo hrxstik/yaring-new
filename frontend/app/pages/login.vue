@@ -3,14 +3,20 @@
     <div class="auth-page__card">
       <h1>Вход</h1>
       <form class="auth-page__form" @submit.prevent="submit">
-        <AppInput v-model="email" label="Email" type="email" autocomplete="email" />
+        <AppInput
+          v-model="phone"
+          label="Телефон"
+          type="tel"
+          placeholder="+7 (999) 000-00-00"
+          autocomplete="tel"
+        />
         <AppInput
           v-model="password"
           label="Пароль"
           type="password"
           autocomplete="current-password"
         />
-        <p v-if="error" class="auth-page__error">{{ error }}</p>
+        <AppAlert v-if="error" :message="error" />
         <AppButton type="submit" block :loading="loading">Войти</AppButton>
       </form>
       <p class="auth-page__footer">
@@ -28,9 +34,9 @@ useHead({ title: 'Вход — Яринг' });
 
 const route = useRoute();
 const auth = useAuthStore();
-const { request } = useApi();
+const { request, formatApiError } = useApi();
 
-const email = ref('');
+const phone = ref('');
 const password = ref('');
 const error = ref<string | null>(null);
 const loading = ref(false);
@@ -41,13 +47,13 @@ async function submit() {
   try {
     const data = await request<{ accessToken: string; user: User }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email: email.value, password: password.value }),
+      body: JSON.stringify({ phone: phone.value, password: password.value }),
     });
     auth.setSession(data.accessToken, data.user);
     const redirect = (route.query.redirect as string) || '/profile';
     await navigateTo(redirect);
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Ошибка входа';
+    error.value = formatApiError(e);
   } finally {
     loading.value = false;
   }
@@ -56,10 +62,11 @@ async function submit() {
 
 <style scoped lang="scss">
 .auth-page {
+  min-height: calc(100vh - var(--header-height) - 220px);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding-top: $space-10;
+  align-items: center;
+  padding-block: $space-10;
 
   &__card {
     @include card;

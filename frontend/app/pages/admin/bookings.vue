@@ -1,7 +1,9 @@
 <template>
   <div>
     <h1>Бронирования</h1>
-    <p v-if="loading">Загрузка…</p>
+    <p v-if="loading" class="admin-skeleton">
+      <AppSkeleton v-for="n in 6" :key="n" height="44px" />
+    </p>
     <table v-else class="admin-table">
       <thead>
         <tr>

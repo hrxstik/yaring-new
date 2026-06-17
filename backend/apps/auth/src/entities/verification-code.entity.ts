@@ -10,8 +10,8 @@ export class VerificationCodeEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
-  email!: string;
+  @Column({ name: 'email' })
+  phone!: string;
 
   @Column()
   code!: string;

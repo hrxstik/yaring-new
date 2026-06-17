@@ -1,22 +1,68 @@
 <template>
   <footer class="footer">
     <div class="footer__inner">
-      <div class="footer__brand">
-        <Trees :size="24" />
-        <span>Яринг — база отдыха</span>
+      <div class="footer__grid">
+        <div class="footer__col footer__brand">
+          <NuxtLink to="/" class="footer__logo">
+            <Trees :size="24" />
+            <span>Яринг</span>
+          </NuxtLink>
+          <p class="footer__desc">
+            База отдыха в лесу у озера. Уютные домики, баня и беседки для семейного
+            и корпоративного отдыха.
+          </p>
+          <div class="footer__social">
+            <a href="#" aria-label="ВКонтакте">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M13.19 17.25c-5.47 0-8.59-3.75-8.72-9.99h2.74c.09 4.58 2.11 6.52 3.71 6.92V7.26h2.58v3.95c1.58-.17 3.24-1.97 3.8-3.95h2.58c-.43 2.44-2.23 4.24-3.51 4.98 1.28.6 3.33 2.17 4.11 5.01h-2.84c-.61-1.9-2.13-3.37-4.14-3.57v3.57h-.31Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </a>
+            <a href="#" aria-label="Telegram">
+              <Send :size="18" />
+            </a>
+          </div>
+        </div>
+
+        <div class="footer__col">
+          <h4>Навигация</h4>
+          <nav class="footer__links">
+            <NuxtLink to="/">Главная</NuxtLink>
+            <NuxtLink to="/booking">Бронирование</NuxtLink>
+          </nav>
+        </div>
+
+        <div class="footer__col">
+          <h4>Информация</h4>
+          <nav class="footer__links">
+            <NuxtLink to="/rules">Правила проживания</NuxtLink>
+            <NuxtLink to="/privacy">Политика конфиденциальности</NuxtLink>
+            <NuxtLink to="/contacts">Контакты</NuxtLink>
+          </nav>
+        </div>
+
+        <div class="footer__col">
+          <h4>Контакты</h4>
+          <ul class="footer__contacts">
+            <li><Phone :size="16" /> +7 (900) 000-00-00</li>
+            <li><MapPin :size="16" /> Яринг, координаты на карте</li>
+          </ul>
+        </div>
+
+        <div class="footer__col footer__map">
+          <YandexMap height="180px" />
+        </div>
       </div>
-      <nav class="footer__nav">
-        <NuxtLink to="/privacy">Политика конфиденциальности</NuxtLink>
-        <NuxtLink to="/rules">Правила проживания</NuxtLink>
-        <NuxtLink to="/contacts">Контакты</NuxtLink>
-      </nav>
+
       <p class="footer__copy">© {{ year }} Яринг. Все права защищены.</p>
     </div>
   </footer>
 </template>
 
 <script setup lang="ts">
-import { Trees } from 'lucide-vue-next';
+import { Trees, Phone, MapPin, Send } from 'lucide-vue-next';
 
 const year = new Date().getFullYear();
 </script>
@@ -24,39 +70,97 @@ const year = new Date().getFullYear();
 <style scoped lang="scss">
 .footer {
   margin-top: auto;
-  background: var(--color-surface);
+  background: var(--color-surface-elevated);
   border-top: 1px solid var(--color-border);
-  padding: $space-8 0;
+  padding: var(--space-section) 0 $space-6;
 
   &__inner {
     @include container;
-    display: flex;
-    flex-direction: column;
-    gap: $space-5;
+  }
+
+  &__grid {
+    display: grid;
+    gap: $space-6;
+
+    @include sm {
+      grid-template-columns: repeat(2, 1fr);
+    }
 
     @include md {
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
+      grid-template-columns: 1.4fr 1fr 1fr 1.2fr 1fr;
+      gap: $space-5;
     }
   }
 
-  &__brand {
-    display: flex;
-    align-items: center;
-    gap: $space-2;
-    color: var(--color-primary);
-    font-weight: 500;
+  &__col {
+    h4 {
+      font-size: var(--font-sm);
+      font-weight: 700;
+      margin-bottom: $space-4;
+      color: var(--color-text);
+    }
   }
 
-  &__nav {
+  &__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    font-size: var(--font-lg);
+    font-weight: 800;
+    color: var(--color-primary);
+    text-decoration: none;
+    margin-bottom: $space-3;
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
+  &__desc {
+    font-size: var(--font-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+    margin-bottom: $space-4;
+  }
+
+  &__social {
     display: flex;
-    flex-wrap: wrap;
-    gap: $space-4;
+    gap: $space-3;
 
     a {
-      font-size: $font-size-sm;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      font-size: var(--font-xs);
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      &:hover {
+        color: var(--color-primary);
+        border-color: var(--color-primary);
+        text-decoration: none;
+      }
+    }
+  }
+
+  &__links {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+
+    a {
+      font-size: var(--font-sm);
       color: var(--color-text-secondary);
       text-decoration: none;
 
@@ -66,15 +170,47 @@ const year = new Date().getFullYear();
     }
   }
 
-  &__copy {
-    font-size: $font-size-sm;
-    color: var(--color-text-muted);
+  &__contacts {
+    list-style: none;
+    padding: 0;
     margin: 0;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: $space-2;
+      font-size: var(--font-sm);
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__map-placeholder {
+    aspect-ratio: 4 / 3;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $space-2;
+    color: var(--color-text-muted);
+    font-size: var(--font-sm);
+  }
+
+  &__copy {
+    margin: $space-8 0 0;
+    padding-top: $space-5;
+    border-top: 1px solid var(--color-border);
+    font-size: var(--font-sm);
+    color: var(--color-text-muted);
+    text-align: center;
 
     @include md {
-      width: auto;
-      text-align: right;
+      text-align: left;
     }
   }
 }

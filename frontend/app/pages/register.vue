@@ -1,25 +1,31 @@
 <template>
   <div class="page-content auth-page">
     <div class="auth-page__card">
-      <h1>{{ step === 'register' ? 'Регистрация' : 'Подтверждение email' }}</h1>
+      <h1>{{ step === 'register' ? 'Регистрация' : 'Подтверждение телефона' }}</h1>
 
       <form v-if="step === 'register'" class="auth-page__form" @submit.prevent="register">
         <AppInput v-model="name" label="Имя" autocomplete="name" />
-        <AppInput v-model="email" label="Email" type="email" autocomplete="email" />
+        <AppInput
+          v-model="phone"
+          label="Телефон"
+          type="tel"
+          placeholder="+7 (999) 000-00-00"
+          autocomplete="tel"
+        />
         <AppInput
           v-model="password"
           label="Пароль"
           type="password"
           autocomplete="new-password"
         />
-        <p v-if="error" class="auth-page__error">{{ error }}</p>
+        <AppAlert v-if="error" :message="error" />
         <AppButton type="submit" block :loading="loading">Зарегистрироваться</AppButton>
       </form>
 
       <form v-else class="auth-page__form" @submit.prevent="verify">
-        <p class="auth-page__hint">Код отправлен на {{ email }}</p>
-        <AppInput v-model="code" label="Код из письма" maxlength="6" />
-        <p v-if="error" class="auth-page__error">{{ error }}</p>
+        <p class="auth-page__hint">Код отправлен на {{ phone }}</p>
+        <AppInput v-model="code" label="Код из SMS" maxlength="6" />
+        <AppAlert v-if="error" :message="error" />
         <AppButton type="submit" block :loading="loading">Подтвердить</AppButton>
         <AppButton type="button" variant="ghost" block @click="resend">
           Отправить код повторно
@@ -40,11 +46,11 @@ import type { User } from '~/types';
 useHead({ title: 'Регистрация — Яринг' });
 
 const auth = useAuthStore();
-const { request } = useApi();
+const { request, formatApiError } = useApi();
 
 const step = ref<'register' | 'verify'>('register');
 const name = ref('');
-const email = ref('');
+const phone = ref('');
 const password = ref('');
 const code = ref('');
 const error = ref<string | null>(null);
@@ -58,13 +64,13 @@ async function register() {
       method: 'POST',
       body: JSON.stringify({
         name: name.value,
-        email: email.value,
+        phone: phone.value,
         password: password.value,
       }),
     });
     step.value = 'verify';
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Ошибка регистрации';
+    error.value = formatApiError(e);
   } finally {
     loading.value = false;
   }
@@ -75,16 +81,16 @@ async function verify() {
   error.value = null;
   try {
     const data = await request<{ accessToken: string; user: User }>(
-      '/auth/verify-email',
+      '/auth/verify-phone',
       {
         method: 'POST',
-        body: JSON.stringify({ email: email.value, code: code.value }),
+        body: JSON.stringify({ phone: phone.value, code: code.value }),
       },
     );
     auth.setSession(data.accessToken, data.user);
     await navigateTo('/profile');
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Неверный код';
+    error.value = formatApiError(e);
   } finally {
     loading.value = false;
   }
@@ -94,19 +100,21 @@ async function resend() {
   try {
     await request('/auth/resend-code', {
       method: 'POST',
-      body: JSON.stringify({ email: email.value }),
+      body: JSON.stringify({ phone: phone.value }),
     });
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Ошибка отправки';
+    error.value = formatApiError(e);
   }
 }
 </script>
 
 <style scoped lang="scss">
 .auth-page {
+  min-height: calc(100vh - var(--header-height) - 220px);
   display: flex;
   justify-content: center;
-  padding-top: $space-10;
+  align-items: center;
+  padding-block: $space-10;
 
   &__card {
     @include card;

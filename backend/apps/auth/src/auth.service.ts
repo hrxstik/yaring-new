@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { UserEntity } from './entities/user.entity';
 import { VerificationCodeEntity } from './entities/verification-code.entity';
-import { EmailService } from './email.service';
+import { SmsService } from './sms.service';
 import type { JwtPayload } from '@app/common';
 
 @Injectable()
@@ -22,13 +22,13 @@ export class AuthService {
     @InjectRepository(VerificationCodeEntity)
     private readonly codes: Repository<VerificationCodeEntity>,
     private readonly jwt: JwtService,
-    private readonly email: EmailService,
+    private readonly sms: SmsService,
   ) {}
 
-  async register(email: string, password: string, name: string) {
-    const normalized = email.toLowerCase().trim();
-    const existing = await this.users.findOne({ where: { email: normalized } });
-    if (existing?.emailVerified) {
+  async register(phone: string, password: string, name: string) {
+    const normalized = this.normalizePhone(phone);
+    const existing = await this.users.findOne({ where: { phone: normalized } });
+    if (existing?.phoneVerified) {
       throw new ConflictException('Пользователь уже зарегистрирован');
     }
 
@@ -36,11 +36,11 @@ export class AuthService {
     let user = existing;
     if (!user) {
       user = this.users.create({
-        email: normalized,
+        phone: normalized,
         passwordHash,
         name: name.trim(),
         role: 'user',
-        emailVerified: false,
+        phoneVerified: false,
       });
     } else {
       user.passwordHash = passwordHash;
@@ -48,29 +48,57 @@ export class AuthService {
     }
     await this.users.save(user);
     await this.sendCode(normalized, 'registration');
-    return { message: 'Код подтверждения отправлен на почту' };
+    return { message: 'Код подтверждения отправлен по SMS' };
   }
 
-  async verifyEmail(email: string, code: string) {
-    const normalized = email.toLowerCase().trim();
+  async verifyPhone(phone: string, code: string) {
+    const normalized = this.normalizePhone(phone);
     await this.validateCode(normalized, code, 'registration');
-    const user = await this.users.findOne({ where: { email: normalized } });
+    const user = await this.users.findOne({ where: { phone: normalized } });
     if (!user) throw new NotFoundException('Пользователь не найден');
-    user.emailVerified = true;
+    user.phoneVerified = true;
     await this.users.save(user);
-    await this.codes.delete({ email: normalized, purpose: 'registration' });
+    await this.codes.delete({ phone: normalized, purpose: 'registration' });
     return this.issueTokens(user);
   }
 
-  async login(email: string, password: string) {
-    const normalized = email.toLowerCase().trim();
-    const user = await this.users.findOne({ where: { email: normalized } });
+  async login(phone: string, password: string) {
+    const normalized = this.normalizePhone(phone);
+    const user = await this.users.findOne({ where: { phone: normalized } });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      throw new UnauthorizedException('Неверный email или пароль');
+      throw new UnauthorizedException('Неверный телефон или пароль');
     }
-    if (!user.emailVerified) {
-      throw new UnauthorizedException('Подтвердите email перед входом');
+    if (!user.phoneVerified) {
+      throw new UnauthorizedException('Подтвердите телефон перед входом');
     }
+    return this.issueTokens(user);
+  }
+
+  async createTestUser(phone: string, password: string, name: string) {
+    if (process.env.E2E_TEST_MODE !== '1') {
+      throw new NotFoundException('Not found');
+    }
+
+    const normalized = this.normalizePhone(phone);
+    const passwordHash = await bcrypt.hash(password, 10);
+    let user = await this.users.findOne({ where: { phone: normalized } });
+
+    if (!user) {
+      user = this.users.create({
+        phone: normalized,
+        passwordHash,
+        name: name.trim(),
+        role: 'user',
+        phoneVerified: true,
+      });
+    } else {
+      user.passwordHash = passwordHash;
+      user.name = name.trim();
+      user.phoneVerified = true;
+      user.role = 'user';
+    }
+
+    await this.users.save(user);
     return this.issueTokens(user);
   }
 
@@ -80,12 +108,12 @@ export class AuthService {
     return this.toProfile(user);
   }
 
-  async resendCode(email: string) {
-    const normalized = email.toLowerCase().trim();
-    const user = await this.users.findOne({ where: { email: normalized } });
+  async resendCode(phone: string) {
+    const normalized = this.normalizePhone(phone);
+    const user = await this.users.findOne({ where: { phone: normalized } });
     if (!user) throw new NotFoundException('Пользователь не найден');
-    if (user.emailVerified) {
-      throw new BadRequestException('Email уже подтверждён');
+    if (user.phoneVerified) {
+      throw new BadRequestException('Телефон уже подтверждён');
     }
     await this.sendCode(normalized, 'registration');
     return { message: 'Код отправлен повторно' };
@@ -100,8 +128,8 @@ export class AuthService {
   }
 
   async ensureAdminSeed() {
-    const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@yaring.ru').toLowerCase();
-    const existing = await this.users.findOne({ where: { email: adminEmail } });
+    const adminPhone = this.normalizePhone(process.env.ADMIN_PHONE ?? '+79990000000');
+    const existing = await this.users.findOne({ where: { phone: adminPhone } });
     if (existing) return;
     const passwordHash = await bcrypt.hash(
       process.env.ADMIN_PASSWORD ?? 'admin123',
@@ -109,31 +137,31 @@ export class AuthService {
     );
     await this.users.save(
       this.users.create({
-        email: adminEmail,
+        phone: adminPhone,
         passwordHash,
         name: 'Администратор',
         role: 'admin',
-        emailVerified: true,
+        phoneVerified: true,
       }),
     );
   }
 
-  private async sendCode(email: string, purpose: string) {
-    await this.codes.delete({ email, purpose });
+  private async sendCode(phone: string, purpose: string) {
+    await this.codes.delete({ phone, purpose });
     await this.codes.delete({
       expiresAt: LessThan(new Date()),
     });
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await this.codes.save(
-      this.codes.create({ email, code, purpose, expiresAt }),
+      this.codes.create({ phone, code, purpose, expiresAt }),
     );
-    await this.email.sendVerificationCode(email, code);
+    await this.sms.sendVerificationCode(phone, code);
   }
 
-  private async validateCode(email: string, code: string, purpose: string) {
+  private async validateCode(phone: string, code: string, purpose: string) {
     const record = await this.codes.findOne({
-      where: { email, code, purpose },
+      where: { phone, code, purpose },
       order: { createdAt: 'DESC' },
     });
     if (!record || record.expiresAt < new Date()) {
@@ -144,7 +172,7 @@ export class AuthService {
   private issueTokens(user: UserEntity) {
     const payload: JwtPayload = {
       sub: user.id,
-      email: user.email,
+      phone: user.phone,
       role: user.role,
     };
     return {
@@ -153,13 +181,21 @@ export class AuthService {
     };
   }
 
+  private normalizePhone(phone: string) {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length === 10) return `7${digits}`;
+    if (digits.length === 11 && digits.startsWith('8')) return `7${digits.slice(1)}`;
+    if (digits.length === 11 && digits.startsWith('7')) return digits;
+    throw new BadRequestException('Укажите телефон в формате +7XXXXXXXXXX');
+  }
+
   private toProfile(user: UserEntity) {
     return {
       id: user.id,
-      email: user.email,
+      phone: user.phone,
       name: user.name,
       role: user.role,
-      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
       createdAt: user.createdAt.toISOString(),
     };
   }

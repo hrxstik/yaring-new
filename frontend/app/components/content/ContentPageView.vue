@@ -3,8 +3,16 @@
     <h1>{{ page.title }}</h1>
     <div class="prose" v-html="page.body" />
   </article>
-  <p v-else-if="loading">Загрузка…</p>
-  <p v-else class="content-page__error">{{ error ?? 'Страница не найдена' }}</p>
+  <ContentPageSkeleton v-else-if="loading" />
+  <AppAlert
+    v-else
+    :title="error ? 'Не удалось загрузить страницу' : 'Страница не найдена'"
+    :message="error ?? 'Попробуйте обновить страницу или вернитесь позже.'"
+  >
+    <template v-if="error" #actions>
+      <AppButton size="sm" @click="load">Повторить</AppButton>
+    </template>
+  </AppAlert>
 </template>
 
 <script setup lang="ts">
@@ -12,28 +20,29 @@ import type { ContentPage } from '~/types';
 
 const props = defineProps<{ slug: string }>();
 
-const { request } = useApi();
+const { request, formatApiError } = useApi();
 const page = ref<ContentPage | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
-onMounted(async () => {
+onMounted(load);
+
+async function load() {
+  loading.value = true;
+  error.value = null;
   try {
     page.value = await request<ContentPage>(`/pages/${props.slug}`);
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Ошибка загрузки';
+    page.value = null;
+    error.value = formatApiError(e);
   } finally {
     loading.value = false;
   }
-});
+}
 </script>
 
 <style scoped lang="scss">
 .content-page {
   max-width: 800px;
-
-  &__error {
-    color: var(--color-text-muted);
-  }
 }
 </style>

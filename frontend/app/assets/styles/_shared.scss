@@ -1,0 +1,151 @@
+// Единый модуль: переменные + миксины (без кросс-@use — стабильно для Vite additionalData)
+
+// --- Grid & breakpoints ---
+$step: 8px;
+$bp-xs: 360px;
+$bp-sm: 640px;
+$bp-md: 1024px;
+$bp-lg: 1440px;
+$bp-xl: 1920px;
+
+$space-1: $step * 0.5;
+$space-2: $step;
+$space-3: $step * 1.5;
+$space-4: $step * 2;
+$space-5: $step * 3;
+$space-6: $step * 4;
+$space-7: $step * 5;
+$space-8: $step * 6;
+$space-9: $step * 8;
+$space-10: $step * 10;
+$space-11: $step * 12;
+$space-12: $step * 15;
+
+$font-family: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
+$font-size-xs: 12px;
+$font-size-sm: 14px;
+$font-size-base: 15px;
+$font-size-lg: 17px;
+$font-size-xl: 22px;
+$font-size-2xl: 28px;
+$font-size-3xl: 34px;
+
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-full: 9999px;
+
+$header-height: 64px;
+$content-max-width: 1360px;
+$transition: 200ms ease;
+
+$accent-light: #3d6b4f;
+$accent-dark: #6aab7a;
+
+$light-bg: #f4f7f5;
+$light-surface: #ffffff;
+$light-surface-elevated: #eef2ef;
+$light-text: #1a2e1f;
+$light-text-secondary: #4a5f52;
+$light-text-muted: #7a8f82;
+$light-border: #d4e0d8;
+$light-primary: $accent-light;
+
+$dark-bg: #0f1612;
+$dark-surface: #1a2420;
+$dark-surface-elevated: #243028;
+$dark-text: #e8f0ea;
+$dark-text-secondary: #a8bdb0;
+$dark-text-muted: #6b8074;
+$dark-border: #2d4034;
+$dark-primary: $accent-dark;
+
+// --- Breakpoint mixins ---
+@mixin xs {
+  @media (min-width: $bp-xs) {
+    @content;
+  }
+}
+
+@mixin sm {
+  @media (min-width: $bp-sm) {
+    @content;
+  }
+}
+
+@mixin md {
+  @media (min-width: $bp-md) {
+    @content;
+  }
+}
+
+@mixin lg {
+  @media (min-width: $bp-lg) {
+    @content;
+  }
+}
+
+@mixin xl {
+  @media (min-width: $bp-xl) {
+    @content;
+  }
+}
+
+@mixin container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--space-page-x);
+}
+
+@mixin card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-page-y);
+  box-shadow: var(--shadow-card);
+}
+
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-3 $space-5;
+  border-radius: var(--radius-md);
+  font-size: var(--font-base);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition:
+    background $transition,
+    color $transition,
+    border-color $transition,
+    opacity $transition,
+    transform $transition;
+}
+
+@mixin focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+@mixin section-title {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+@mixin nav-link-active {
+  &.router-link-exact-active {
+    color: var(--color-primary);
+    text-decoration: none;
+
+    &::after {
+      transform: scaleX(1);
+    }
+  }
+}
