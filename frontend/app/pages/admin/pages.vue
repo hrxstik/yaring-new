@@ -29,10 +29,10 @@
 <script setup lang="ts">
 import type { ContentPage } from '~/types';
 
-definePageMeta({ layout: 'admin' });
+definePageMeta({ layout: 'admin', middleware: 'admin' });
 useHead({ title: 'Страницы — Админка' });
 
-const { request } = useApi();
+const { request, formatApiError } = useApi();
 
 const pageSlugs = ['contacts', 'rules', 'privacy'] as const;
 const slugLabels: Record<string, string> = {
@@ -68,7 +68,7 @@ async function save() {
     });
     message.value = 'Сохранено';
   } catch (e) {
-    message.value = e instanceof Error ? e.message : 'Ошибка';
+    message.value = formatApiError(e);
   } finally {
     saving.value = false;
   }

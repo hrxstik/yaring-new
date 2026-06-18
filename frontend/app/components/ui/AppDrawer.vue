@@ -2,7 +2,13 @@
   <Teleport to="body">
     <div v-if="open" class="drawer">
       <button type="button" class="drawer__overlay" aria-label="Закрыть" @click="$emit('close')" />
-      <aside class="drawer__panel" :class="{ 'drawer__panel--wide': wide }">
+      <aside
+        class="drawer__panel"
+        :class="{ 'drawer__panel--wide': wide }"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="title"
+      >
         <header class="drawer__header">
           <button
             v-if="showBack"
@@ -32,14 +38,39 @@
 <script setup lang="ts">
 import { ChevronLeft, X } from 'lucide-vue-next';
 
-defineProps<{
+const props = defineProps<{
   open: boolean;
   title: string;
   showBack?: boolean;
   wide?: boolean;
 }>();
 
-defineEmits<{ close: []; back: [] }>();
+const emit = defineEmits<{ close: []; back: [] }>();
+
+function onEscape(event: KeyboardEvent) {
+  if (event.key === 'Escape') emit('close');
+}
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (!import.meta.client) return;
+
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', onEscape);
+    } else {
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onEscape);
+    }
+  },
+);
+
+onUnmounted(() => {
+  if (!import.meta.client) return;
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', onEscape);
+});
 </script>
 
 <style scoped lang="scss">

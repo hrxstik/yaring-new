@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import type { BookableEntity, Availability, Booking } from '~/types';
-import { formatRange, formatTimeRange } from '~/utils/calendar';
+import { formatRange, formatTimeRange, localTodayIso, addDaysIso, daysBetweenIso } from '~/utils/calendar';
 
 useHead({ title: 'Бронирование — Яринг' });
 
@@ -125,10 +125,7 @@ const estimatedPrice = computed(() => {
     return hours * (e.pricePerHour ?? 0);
   }
   if (!selection.endDate) return e.pricePerDay;
-  const start = new Date(selection.startDate);
-  const end = new Date(selection.endDate);
-  const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
-  return days * e.pricePerDay;
+  return daysBetweenIso(selection.startDate, selection.endDate) * e.pricePerDay;
 });
 
 async function openBooking(entity: BookableEntity) {
@@ -152,17 +149,16 @@ async function openBooking(entity: BookableEntity) {
   selection.endTime = undefined;
   error.value = null;
 
-  const from = new Date().toISOString().slice(0, 10);
-  const toDate = new Date();
-  toDate.setMonth(toDate.getMonth() + 3);
-  const to = toDate.toISOString().slice(0, 10);
+  const from = localTodayIso();
+  const to = addDaysIso(from, 90);
 
   try {
     availability.value = await request<Availability>(
       `/availability/${entity.id}?from=${from}&to=${to}`,
     );
-  } catch {
-    availability.value = { blockedDates: [], blockedSlots: [] };
+  } catch (e) {
+    error.value = formatApiError(e);
+    return;
   }
 
   drawerOpen.value = true;

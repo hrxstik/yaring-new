@@ -54,6 +54,10 @@ export class CatalogService {
   async updateEntity(id: string, dto: UpdateEntityDto) {
     const item = await this.entities.findOne({ where: { id } });
     if (!item) throw new NotFoundException('Объект не найден');
+    if (dto.slug && dto.slug !== item.slug) {
+      const existing = await this.entities.findOne({ where: { slug: dto.slug } });
+      if (existing) throw new ConflictException('Slug уже занят');
+    }
     Object.assign(item, dto);
     if (dto.slug) item.slug = dto.slug;
     await this.entities.save(item);

@@ -10,9 +10,13 @@
       <AppButton variant="secondary" size="sm" @click="logout">Выйти</AppButton>
     </div>
 
-    <p v-if="route.query.booked" class="profile-page__success">
-      Бронирование успешно оплачено!
-    </p>
+    <AppAlert
+      v-if="route.query.booked"
+      variant="success"
+      message="Бронирование успешно оплачено!"
+    />
+
+    <AppAlert v-if="actionError" :message="actionError" class="profile-page__action-error" />
 
     <section class="profile-page__section">
       <h2>Мои бронирования</h2>
@@ -57,6 +61,14 @@
           <div class="booking-item__side">
             <strong>{{ booking.totalPrice.toLocaleString('ru-RU') }} ₽</strong>
             <AppButton
+              v-if="booking.status === 'pending_payment'"
+              size="sm"
+              :loading="payingId === booking.id"
+              @click="payBooking(booking)"
+            >
+              Оплатить
+            </AppButton>
+            <AppButton
               v-if="booking.status === 'confirmed'"
               size="sm"
               variant="ghost"
@@ -75,6 +87,8 @@
 import type { Booking } from '~/types';
 import { formatRange, formatDateRu, BOOKING_STATUS_LABELS } from '~/utils/calendar';
 
+definePageMeta({ middleware: 'auth' });
+
 useHead({ title: 'Личный кабинет — Яринг' });
 
 const auth = useAuthStore();
@@ -84,14 +98,25 @@ const { request, formatApiError } = useApi();
 const bookings = ref<Booking[]>([]);
 const loading = ref(true);
 const loadError = ref<string | null>(null);
+const actionError = ref<string | null>(null);
+const payingId = ref<string | null>(null);
 
 onMounted(async () => {
-  if (!auth.isLoggedIn) {
-    await navigateTo('/login?redirect=/profile');
-    return;
-  }
+  await completeMockPaymentFromQuery();
   await loadBookings();
 });
+
+async function completeMockPaymentFromQuery() {
+  const paymentId = route.query.paymentId;
+  if (route.query.payment !== 'mock' || typeof paymentId !== 'string') return;
+
+  try {
+    await request(`/payments/${paymentId}/mock-complete`, { method: 'POST' });
+    await navigateTo('/profile?booked=1', { replace: true });
+  } catch (e) {
+    actionError.value = formatApiError(e);
+  }
+}
 
 async function loadBookings() {
   loading.value = true;
@@ -115,12 +140,48 @@ function logout() {
   navigateTo('/');
 }
 
+async function payBooking(booking: Booking) {
+  payingId.value = booking.id;
+  actionError.value = null;
+
+  try {
+    const payment = await request<{ confirmationUrl?: string; paymentId: string }>(
+      '/payments',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          bookingId: booking.id,
+          amount: booking.totalPrice,
+          description: `Бронирование: ${booking.entityName}`,
+        }),
+      },
+    );
+
+    if (payment.confirmationUrl?.includes('payment=mock')) {
+      await request(`/payments/${payment.paymentId}/mock-complete`, { method: 'POST' });
+      await loadBookings();
+      return;
+    }
+
+    if (payment.confirmationUrl) {
+      window.location.href = payment.confirmationUrl;
+    }
+  } catch (e) {
+    actionError.value = formatApiError(e);
+  } finally {
+    payingId.value = null;
+  }
+}
+
 async function cancelBooking(id: string) {
+  if (!confirm('Отменить бронирование?')) return;
+
+  actionError.value = null;
   try {
     await request(`/bookings/${id}/cancel`, { method: 'POST' });
     await loadBookings();
-  } catch {
-    /* ignore */
+  } catch (e) {
+    actionError.value = formatApiError(e);
   }
 }
 </script>
@@ -140,12 +201,8 @@ async function cancelBooking(id: string) {
     margin: 0;
   }
 
-  &__success {
-    padding: $space-4;
-    background: rgba(61, 107, 79, 0.15);
-    color: var(--color-primary);
-    border-radius: $radius-md;
-    margin-bottom: $space-6;
+  &__action-error {
+    margin-bottom: $space-4;
   }
 
   &__section {

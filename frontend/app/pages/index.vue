@@ -9,12 +9,10 @@
               Отдыхайте на природе в окружении леса и живописного озера вдали от городской суеты
             </p>
             <div class="hero__actions">
-              <NuxtLink to="/booking">
-                <AppButton>Забронировать</AppButton>
-              </NuxtLink>
-              <NuxtLink to="/booking">
-                <AppButton variant="secondary">Смотреть объекты</AppButton>
-              </NuxtLink>
+              <AppButton @click="navigateTo('/booking')">Забронировать</AppButton>
+              <AppButton variant="secondary" @click="navigateTo('/booking')">
+                Смотреть объекты
+              </AppButton>
             </div>
           </div>
 
@@ -70,6 +68,8 @@
 <script setup lang="ts">
 import { CalendarCheck, House, Shield, Leaf, Map, Trees, Users } from 'lucide-vue-next';
 import type { BookableEntity } from '~/types';
+
+useHead({ title: 'База отдыха «Яринг»' });
 
 const { request } = useApi();
 const entities = ref<BookableEntity[]>([]);
@@ -142,16 +142,10 @@ const featuredEntities = computed(() => {
   const source = entities.value.length ? entities.value : fallbackEntities;
   const bySlug = new Map(source.map((entity) => [entity.slug, entity]));
 
-  return fallbackEntities.map((fallback) => ({
-    ...fallback,
-    ...(bySlug.get(fallback.slug) ?? {}),
-    name: fallback.name,
-    description: fallback.description,
-    pricePerDay: fallback.pricePerDay,
-    pricePerHour: fallback.pricePerHour,
-    capacity: fallback.capacity,
-    amenities: fallback.amenities,
-  }));
+  return fallbackEntities.map((fallback) => {
+    const fromApi = bySlug.get(fallback.slug);
+    return fromApi ? { ...fromApi } : { ...fallback };
+  });
 });
 
 onMounted(loadEntities);

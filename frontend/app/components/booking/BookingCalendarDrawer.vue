@@ -51,7 +51,15 @@
 
 <script setup lang="ts">
 import type { BookingType, Availability } from '~/types';
-import { formatRange, formatTimeRange } from '~/utils/calendar';
+import {
+  formatRange,
+  formatTimeRange,
+  localTodayIso,
+  addDaysIso,
+  BOOKING_MIN_ADVANCE_DAYS,
+  HOURLY_MIN_HOURS,
+  HOURLY_MAX_HOURS,
+} from '~/utils/calendar';
 
 const props = defineProps<{
   open: boolean;
@@ -94,11 +102,9 @@ watch(
   },
 );
 
-const minDate = computed(() => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
-});
+const minDate = computed(() =>
+  addDaysIso(localTodayIso(), BOOKING_MIN_ADVANCE_DAYS),
+);
 
 const blockedDates = computed(() => props.availability?.blockedDates ?? []);
 
@@ -127,7 +133,11 @@ const timeLabel = computed(() => formatTimeRange(startTime.value, endTime.value)
 const canApply = computed(() => {
   if (!startDate.value) return false;
   if (props.bookingType === 'daily') return Boolean(startDate.value && endDate.value);
-  return Boolean(startDate.value && startTime.value && endTime.value);
+  if (!startTime.value || !endTime.value) return false;
+  const [sh, sm] = startTime.value.split(':').map(Number);
+  const [eh, em] = endTime.value.split(':').map(Number);
+  const hours = (eh * 60 + em - (sh * 60 + sm)) / 60;
+  return hours >= HOURLY_MIN_HOURS && hours <= HOURLY_MAX_HOURS;
 });
 
 function onDateChange(start?: string, end?: string) {

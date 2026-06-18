@@ -4,7 +4,9 @@
     <p v-if="loading" class="admin-skeleton">
       <AppSkeleton v-for="n in 6" :key="n" height="44px" />
     </p>
-    <table v-else class="admin-table">
+    <AppAlert v-else-if="loadError" :message="loadError" />
+    <template v-else>
+      <table class="admin-table">
       <thead>
         <tr>
           <th>Объект</th>
@@ -31,8 +33,9 @@
           <td class="admin-table__muted">{{ booking.userId.slice(0, 8) }}…</td>
         </tr>
       </tbody>
-    </table>
-    <p v-if="!loading && !bookings.length" class="admin-empty">Броней пока нет</p>
+      </table>
+      <p v-if="!bookings.length" class="admin-empty">Броней пока нет</p>
+    </template>
   </div>
 </template>
 
@@ -40,20 +43,28 @@
 import type { Booking } from '~/types';
 import { formatRange, formatDateRu, BOOKING_STATUS_LABELS } from '~/utils/calendar';
 
-definePageMeta({ layout: 'admin' });
+definePageMeta({ layout: 'admin', middleware: 'admin' });
 useHead({ title: 'Брони — Админка' });
 
-const { request } = useApi();
+const { request, formatApiError } = useApi();
 const bookings = ref<Booking[]>([]);
 const loading = ref(true);
+const loadError = ref<string | null>(null);
 
-onMounted(async () => {
+onMounted(load);
+
+async function load() {
+  loading.value = true;
+  loadError.value = null;
   try {
     bookings.value = await request<Booking[]>('/bookings');
+  } catch (e) {
+    bookings.value = [];
+    loadError.value = formatApiError(e);
   } finally {
     loading.value = false;
   }
-});
+}
 
 function statusLabel(status: string) {
   return BOOKING_STATUS_LABELS[status] ?? status;

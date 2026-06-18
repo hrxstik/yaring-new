@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 
 @Controller()
@@ -24,13 +24,13 @@ export class PaymentController {
   }
 
   @Get('payments/:id')
-  get(@Param('id') id: string) {
-    return this.payment.getPayment(id);
+  get(@Param('id') id: string, @Headers('x-user-id') userId?: string) {
+    return this.payment.getPayment(id, userId);
   }
 
   @Post('payments/:id/mock-complete')
-  mockComplete(@Param('id') id: string) {
-    return this.payment.mockComplete(id);
+  mockComplete(@Param('id') id: string, @Headers('x-user-id') userId?: string) {
+    return this.payment.mockComplete(id, userId);
   }
 
   @Post('webhook/yookassa')

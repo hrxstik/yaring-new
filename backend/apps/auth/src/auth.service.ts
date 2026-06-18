@@ -1,3 +1,4 @@
+import { randomInt } from 'crypto';
 import {
   Injectable,
   ConflictException,
@@ -151,7 +152,7 @@ export class AuthService {
     await this.codes.delete({
       expiresAt: LessThan(new Date()),
     });
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const code = String(randomInt(100000, 1000000));
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await this.codes.save(
       this.codes.create({ phone, code, purpose, expiresAt }),

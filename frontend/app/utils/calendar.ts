@@ -19,6 +19,30 @@ export function toIsoDate(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+export function localTodayIso() {
+  const now = new Date();
+  return toIsoDate(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+export function addDaysIso(iso: string, days: number) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return toIsoDate(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+export function daysBetweenIso(start: string, end: string) {
+  const [sy, sm, sd] = start.split('-').map(Number);
+  const [ey, em, ed] = end.split('-').map(Number);
+  const s = new Date(sy, sm - 1, sd);
+  const e = new Date(ey, em - 1, ed);
+  return Math.max(1, Math.round((e.getTime() - s.getTime()) / 86400000) + 1);
+}
+
+export const BOOKING_MIN_ADVANCE_DAYS = 1;
+export const HOURLY_MIN_HOURS = 1;
+export const HOURLY_MAX_HOURS = 12;
+
 export function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
 }

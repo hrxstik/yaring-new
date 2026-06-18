@@ -2,11 +2,13 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
   Logger,
+  BadGatewayException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { PaymentRecord } from './entities/payment.entity';
 
 @Injectable()
@@ -24,6 +26,22 @@ export class PaymentService {
     amount: number,
     description: string,
   ) {
+    const booking = await this.fetchBooking(bookingId);
+
+    if (booking.userId !== userId) {
+      throw new ForbiddenException('Нет доступа к бронированию');
+    }
+    if (booking.status !== 'pending_payment') {
+      throw new BadRequestException('Бронь уже оплачена или отменена');
+    }
+
+    const expectedAmount = Number(booking.totalPrice);
+    if (Math.abs(amount - expectedAmount) > 0.01) {
+      this.logger.warn(
+        `Клиент передал сумму ${amount}, ожидалось ${expectedAmount} для брони ${bookingId}`,
+      );
+    }
+
     const shopId = process.env.YOOKASSA_SHOP_ID;
     const secretKey = process.env.YOOKASSA_SECRET_KEY;
     const returnUrl =
@@ -32,7 +50,7 @@ export class PaymentService {
     const payment = this.payments.create({
       bookingId,
       userId,
-      amount,
+      amount: expectedAmount,
       status: 'pending',
     });
     await this.payments.save(payment);
@@ -55,7 +73,7 @@ export class PaymentService {
     const { data } = await axios.post(
       'https://api.yookassa.ru/v3/payments',
       {
-        amount: { value: amount.toFixed(2), currency: 'RUB' },
+        amount: { value: expectedAmount.toFixed(2), currency: 'RUB' },
         capture: true,
         confirmation: { type: 'redirect', return_url: returnUrl },
         description,
@@ -95,16 +113,16 @@ export class PaymentService {
 
     payment.status = 'succeeded';
     await this.payments.save(payment);
-    await this.confirmBooking(
-      payment.bookingId,
-      payment.id,
-    );
+    await this.confirmBooking(payment.bookingId, payment.id);
     return { ok: true };
   }
 
-  async getPayment(id: string) {
+  async getPayment(id: string, userId?: string) {
     const payment = await this.payments.findOne({ where: { id } });
     if (!payment) throw new NotFoundException('Платёж не найден');
+    if (userId && payment.userId !== userId) {
+      throw new ForbiddenException('Нет доступа к платежу');
+    }
     return {
       id: payment.id,
       bookingId: payment.bookingId,
@@ -115,16 +133,37 @@ export class PaymentService {
     };
   }
 
-  async mockComplete(paymentId: string) {
+  async mockComplete(paymentId: string, userId?: string) {
     const payment = await this.payments.findOne({ where: { id: paymentId } });
     if (!payment) throw new NotFoundException('Платёж не найден');
+    if (userId && payment.userId !== userId) {
+      throw new ForbiddenException('Нет доступа к платежу');
+    }
     if (payment.status === 'succeeded') {
       throw new BadRequestException('Платёж уже выполнен');
     }
     payment.status = 'succeeded';
     await this.payments.save(payment);
     await this.confirmBooking(payment.bookingId, payment.id);
-    return this.getPayment(payment.id);
+    return this.getPayment(payment.id, userId);
+  }
+
+  private async fetchBooking(bookingId: string) {
+    const bookingUrl =
+      process.env.BOOKING_SERVICE_URL ?? 'http://localhost:3003';
+    try {
+      const { data } = await axios.get(`${bookingUrl}/bookings/${bookingId}`);
+      return data as {
+        userId: string;
+        status: string;
+        totalPrice: number;
+      };
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        throw new NotFoundException('Бронь не найдена');
+      }
+      throw new BadGatewayException('Сервис бронирования недоступен');
+    }
   }
 
   private async confirmBooking(bookingId: string, paymentId: string) {

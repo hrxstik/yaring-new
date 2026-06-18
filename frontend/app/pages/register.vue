@@ -26,6 +26,7 @@
         <p class="auth-page__hint">Код отправлен на {{ phone }}</p>
         <AppInput v-model="code" label="Код из SMS" maxlength="6" />
         <AppAlert v-if="error" :message="error" />
+        <AppAlert v-if="resendMessage" variant="success" :message="resendMessage" />
         <AppButton type="submit" block :loading="loading">Подтвердить</AppButton>
         <AppButton type="button" variant="ghost" block @click="resend">
           Отправить код повторно
@@ -96,12 +97,17 @@ async function verify() {
   }
 }
 
+const resendMessage = ref<string | null>(null);
+
 async function resend() {
+  error.value = null;
+  resendMessage.value = null;
   try {
     await request('/auth/resend-code', {
       method: 'POST',
       body: JSON.stringify({ phone: phone.value }),
     });
+    resendMessage.value = 'Код отправлен повторно';
   } catch (e) {
     error.value = formatApiError(e);
   }

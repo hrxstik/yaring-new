@@ -3,17 +3,21 @@ import {
   BadRequestException,
   NotFoundException,
   ConflictException,
+  BadGatewayException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import axios from 'axios';
+import { Repository, In } from 'typeorm';
+import axios, { AxiosError } from 'axios';
 import {
   BOOKING_RULES,
   daysBetween,
+  parseIsoDate,
   timeToMinutes,
 } from '@app/common';
 import { BookingRecord } from './entities/booking.entity';
 import type { CreateBookingDto } from './booking.dto';
+
+const PENDING_PAYMENT_TTL_MS = 15 * 60 * 1000;
 
 @Injectable()
 export class BookingService {
@@ -48,6 +52,12 @@ export class BookingService {
     return this.toBooking(booking);
   }
 
+  async getById(id: string) {
+    const booking = await this.bookings.findOne({ where: { id } });
+    if (!booking) throw new NotFoundException('Бронь не найдена');
+    return this.toBooking(booking);
+  }
+
   async listByUser(userId: string) {
     const items = await this.bookings.find({
       where: { userId },
@@ -62,12 +72,7 @@ export class BookingService {
   }
 
   async getAvailability(entityId: string, from: string, to: string) {
-    const bookings = await this.bookings.find({
-      where: {
-        entityId,
-        status: 'confirmed' as const,
-      },
-    });
+    const bookings = await this.getBlockingBookings(entityId);
 
     const blockedDates = new Set<string>();
     const blockedSlots: { date: string; startTime: string; endTime: string }[] =
@@ -77,12 +82,15 @@ export class BookingService {
       if (b.bookingType === 'daily') {
         let current = b.startDate;
         while (current <= b.endDate) {
-          blockedDates.add(current);
-          const d = new Date(current);
+          if (this.isWithinRange(current, from, to)) {
+            blockedDates.add(current);
+          }
+          const d = parseIsoDate(current);
+          if (!d) break;
           d.setDate(d.getDate() + 1);
-          current = d.toISOString().slice(0, 10);
+          current = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
-      } else if (b.startTime && b.endTime) {
+      } else if (b.startTime && b.endTime && this.isWithinRange(b.startDate, from, to)) {
         blockedSlots.push({
           date: b.startDate,
           startTime: b.startTime,
@@ -97,6 +105,9 @@ export class BookingService {
   async confirmPayment(bookingId: string, paymentId: string) {
     const booking = await this.bookings.findOne({ where: { id: bookingId } });
     if (!booking) throw new NotFoundException('Бронь не найдена');
+    if (booking.status === 'cancelled') {
+      throw new BadRequestException('Бронь отменена');
+    }
     booking.status = 'confirmed';
     booking.paymentId = paymentId;
     await this.bookings.save(booking);
@@ -114,9 +125,59 @@ export class BookingService {
     return this.toBooking(booking);
   }
 
+  private async getBlockingBookings(entityId: string) {
+    const bookings = await this.bookings.find({
+      where: {
+        entityId,
+        status: In(['confirmed', 'pending_payment']),
+      },
+    });
+    return bookings.filter((b) => this.isBlockingBooking(b));
+  }
+
+  private isBlockingBooking(booking: BookingRecord) {
+    if (booking.status === 'confirmed') return true;
+    if (booking.status === 'pending_payment') {
+      return Date.now() - booking.createdAt.getTime() < PENDING_PAYMENT_TTL_MS;
+    }
+    return false;
+  }
+
+  private isWithinRange(date: string, from: string, to: string) {
+    if (!from && !to) return true;
+    if (from && date < from) return false;
+    if (to && date > to) return false;
+    return true;
+  }
+
   private validateDates(dto: CreateBookingDto, bookingType: string) {
     if (dto.endDate < dto.startDate) {
       throw new BadRequestException('Дата выезда раньше заезда');
+    }
+
+    const start = parseIsoDate(dto.startDate);
+    if (!start) {
+      throw new BadRequestException('Некорректная дата начала');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const minStart = new Date(today);
+    minStart.setDate(minStart.getDate() + BOOKING_RULES.minAdvanceDays);
+
+    const maxStart = new Date(today);
+    maxStart.setDate(maxStart.getDate() + BOOKING_RULES.maxAdvanceDays);
+
+    if (start < minStart) {
+      throw new BadRequestException(
+        `Бронирование возможно не ранее чем за ${BOOKING_RULES.minAdvanceDays} дн.`,
+      );
+    }
+    if (start > maxStart) {
+      throw new BadRequestException(
+        `Бронирование возможно не более чем на ${BOOKING_RULES.maxAdvanceDays} дн. вперёд`,
+      );
     }
 
     if (bookingType === 'hourly') {
@@ -151,9 +212,7 @@ export class BookingService {
     dto: CreateBookingDto,
     bookingType: string,
   ) {
-    const existing = await this.bookings.find({
-      where: { entityId: dto.entityId, status: 'confirmed' as const },
-    });
+    const existing = await this.getBlockingBookings(dto.entityId);
 
     for (const b of existing) {
       if (bookingType === 'daily') {
@@ -196,8 +255,15 @@ export class BookingService {
   private async fetchEntity(entityId: string) {
     const catalogUrl =
       process.env.CATALOG_SERVICE_URL ?? 'http://localhost:3002';
-    const { data } = await axios.get(`${catalogUrl}/entities/${entityId}`);
-    return data;
+    try {
+      const { data } = await axios.get(`${catalogUrl}/entities/${entityId}`);
+      return data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        throw new NotFoundException('Объект не найден');
+      }
+      throw new BadGatewayException('Сервис каталога недоступен');
+    }
   }
 
   private toBooking(booking: BookingRecord) {

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Headers,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -53,6 +54,9 @@ export class GatewayController {
 
   @Post('auth/test-user')
   createTestUser(@Body() body: unknown) {
+    if (process.env.E2E_TEST_MODE !== '1') {
+      throw new NotFoundException();
+    }
     return this.proxy.forward('auth', '/test-user', {
       method: 'POST',
       data: body,
@@ -207,8 +211,10 @@ export class GatewayController {
     @Headers('authorization') authHeader: string,
     @Param('id') id: string,
   ) {
-    await this.auth.requireAuth(authHeader);
-    return this.proxy.forward('payment', `/payments/${id}`);
+    const user = await this.auth.requireAuth(authHeader);
+    return this.proxy.forward('payment', `/payments/${id}`, {
+      headers: { 'x-user-id': user.sub },
+    });
   }
 
   @Post('payments/:id/mock-complete')
@@ -216,9 +222,10 @@ export class GatewayController {
     @Headers('authorization') authHeader: string,
     @Param('id') id: string,
   ) {
-    await this.auth.requireAuth(authHeader);
+    const user = await this.auth.requireAuth(authHeader);
     return this.proxy.forward('payment', `/payments/${id}/mock-complete`, {
       method: 'POST',
+      headers: { 'x-user-id': user.sub },
     });
   }
 

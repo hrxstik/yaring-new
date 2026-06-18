@@ -47,6 +47,7 @@
       <form class="entity-form" @submit.prevent="save">
         <AppInput v-model="form.name" label="Название" />
         <AppInput v-model="form.slug" label="Slug" />
+        <AppInput v-model="form.imageUrl" label="URL изображения" placeholder="/entity-cottage.png" />
         <label class="entity-form__field">
           <span>Описание</span>
           <textarea v-model="form.description" rows="4" />
@@ -81,10 +82,10 @@
 <script setup lang="ts">
 import type { BookableEntity, BookingType } from '~/types';
 
-definePageMeta({ layout: 'admin' });
+definePageMeta({ layout: 'admin', middleware: 'admin' });
 useHead({ title: 'Объекты — Админка' });
 
-const { request } = useApi();
+const { request, formatApiError } = useApi();
 const entities = ref<BookableEntity[]>([]);
 const loading = ref(true);
 const drawerOpen = ref(false);
@@ -95,6 +96,7 @@ const error = ref<string | null>(null);
 const form = reactive({
   name: '',
   slug: '',
+  imageUrl: '',
   description: '',
   bookingType: 'daily' as BookingType,
   pricePerDay: 0,
@@ -119,6 +121,7 @@ async function load() {
 function resetForm() {
   form.name = '';
   form.slug = '';
+  form.imageUrl = '';
   form.description = '';
   form.bookingType = 'daily';
   form.pricePerDay = 0;
@@ -139,6 +142,7 @@ function openEdit(entity: BookableEntity) {
   editingId.value = entity.id;
   form.name = entity.name;
   form.slug = entity.slug;
+  form.imageUrl = entity.imageUrl ?? '';
   form.description = entity.description;
   form.bookingType = entity.bookingType;
   form.pricePerDay = entity.pricePerDay;
@@ -175,7 +179,7 @@ async function save() {
     drawerOpen.value = false;
     await load();
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Ошибка сохранения';
+    error.value = formatApiError(e);
   } finally {
     saving.value = false;
   }

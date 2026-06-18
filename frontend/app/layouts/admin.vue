@@ -9,6 +9,13 @@
       </nav>
       <NuxtLink to="/" class="admin-layout__back">← На сайт</NuxtLink>
     </aside>
+
+    <nav class="admin-layout__mobile-nav" aria-label="Админ-навигация">
+      <NuxtLink to="/admin/entities">Объекты</NuxtLink>
+      <NuxtLink to="/admin/bookings">Брони</NuxtLink>
+      <NuxtLink to="/admin/pages">Страницы</NuxtLink>
+    </nav>
+
     <div class="admin-layout__content">
       <header class="admin-layout__header">
         <ThemeToggle />
@@ -23,22 +30,17 @@
 
 <script setup lang="ts">
 const auth = useAuthStore();
-
-onMounted(async () => {
-  if (!auth.isLoggedIn) {
-    await navigateTo('/login');
-    return;
-  }
-  if (!auth.isAdmin) {
-    await navigateTo('/');
-  }
-});
 </script>
 
 <style scoped lang="scss">
 .admin-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
+
+  @include md {
+    flex-direction: row;
+  }
 
   &__sidebar {
     width: 240px;
@@ -51,6 +53,33 @@ onMounted(async () => {
 
     @include md {
       display: flex;
+    }
+  }
+
+  &__mobile-nav {
+    display: flex;
+    gap: $space-2;
+    padding: $space-3 $space-4;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+    overflow-x: auto;
+
+    @include md {
+      display: none;
+    }
+
+    a {
+      flex-shrink: 0;
+      padding: $space-2 $space-3;
+      border-radius: $radius-md;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-size: $font-size-sm;
+
+      &.router-link-active {
+        background: var(--color-surface-elevated);
+        color: var(--color-primary);
+      }
     }
   }
 

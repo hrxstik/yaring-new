@@ -58,6 +58,7 @@ test.describe('user scenarios', () => {
     await authorizePage(page, user);
 
     await page.goto('/profile');
+    page.once('dialog', (dialog) => dialog.accept());
     await page
       .locator('.booking-item')
       .filter({ hasText: booking.entityName })

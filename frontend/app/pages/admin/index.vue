@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import { Building2, Calendar, FileText } from 'lucide-vue-next';
 
-definePageMeta({ layout: 'admin' });
+definePageMeta({ layout: 'admin', middleware: 'admin' });
 useHead({ title: 'Админка — Яринг' });
 </script>
 

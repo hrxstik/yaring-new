@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Headers,
   Param,
@@ -27,10 +28,15 @@ export class BookingController {
     return this.booking.listByUser(userId);
   }
 
+  @Get('bookings/:id')
+  getById(@Param('id') id: string) {
+    return this.booking.getById(id);
+  }
+
   @Get('bookings')
   allBookings(@Headers('x-user-role') role?: string) {
     if (role !== 'admin') {
-      return [];
+      throw new ForbiddenException('Доступ запрещён');
     }
     return this.booking.listAll();
   }

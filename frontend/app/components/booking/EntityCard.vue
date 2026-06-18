@@ -46,15 +46,14 @@ const placeholders: Record<string, string> = {
 };
 
 const imageSrc = computed(() => {
-  if (props.entity.imageUrl?.startsWith('http')) return props.entity.imageUrl;
+  const url = props.entity.imageUrl;
+  if (url && (url.startsWith('http') || url.startsWith('/'))) return url;
   return placeholders[props.entity.slug] ?? null;
 });
 
 const priceLabel = computed(() => {
   if (props.entity.bookingType === 'hourly') {
-    const hours = props.entity.slug === 'banya' ? 2 : 3;
-    const total = (props.entity.pricePerHour ?? 0) * hours;
-    return `от ${total.toLocaleString('ru-RU')} ₽ / ${hours} ч`;
+    return `от ${(props.entity.pricePerHour ?? 0).toLocaleString('ru-RU')} ₽ / час`;
   }
   return `от ${props.entity.pricePerDay.toLocaleString('ru-RU')} ₽ / сутки`;
 });

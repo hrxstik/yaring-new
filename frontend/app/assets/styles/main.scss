@@ -80,19 +80,15 @@ img {
   }
 }
 
+.section-block__title {
+  @include section-title;
+  margin-bottom: $space-6;
+}
+
 .page-content--narrow {
   max-width: min(var(--container-max), 720px);
   margin-inline: auto;
   padding-inline: var(--space-page-x);
-}
-
-.section-block {
-  padding-block: var(--space-section);
-}
-
-.section-block__title {
-  @include section-title;
-  margin-bottom: $space-6;
 }
 
 .prose {
