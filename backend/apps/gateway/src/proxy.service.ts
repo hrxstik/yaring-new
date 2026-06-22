@@ -16,8 +16,14 @@ export class ProxyService {
     config: AxiosRequestConfig = {},
   ) {
     const url = `${this.services[service]}${path}`;
+    const secret = process.env.INTERNAL_SERVICE_SECRET;
+    const internalHeaders = secret ? { 'x-internal-secret': secret } : {};
     try {
-      const { data } = await axios({ url, ...config });
+      const { data } = await axios({
+        url,
+        ...config,
+        headers: { ...internalHeaders, ...config.headers },
+      });
       return data;
     } catch (error) {
       if (error instanceof AxiosError && error.response) {

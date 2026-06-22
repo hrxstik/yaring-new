@@ -7,10 +7,13 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { InternalGuard } from '@app/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './booking.dto';
 
+@UseGuards(InternalGuard)
 @Controller()
 export class BookingController {
   constructor(private readonly booking: BookingService) {}

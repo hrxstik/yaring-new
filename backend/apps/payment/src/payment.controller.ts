@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, UseGuards } from '@nestjs/common';
+import { InternalGuard } from '@app/common';
 import { PaymentService } from './payment.service';
 
+@UseGuards(InternalGuard)
 @Controller()
 export class PaymentController {
   constructor(private readonly payment: PaymentService) {}
