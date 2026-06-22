@@ -33,6 +33,13 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'Яринг — база отдыха',
+      script: [
+        {
+          // Runs before first paint to prevent theme flash
+          innerHTML: `(function(){try{var t=localStorage.getItem('yaring-theme')||((window.matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`,
+          type: 'text/javascript',
+        },
+      ],
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
