@@ -1,38 +1,32 @@
 import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
-import axios from 'axios';
+import { JwtService } from '@nestjs/jwt';
 import type { JwtPayload } from '@app/common';
 
 @Injectable()
 export class AuthGuardService {
-  private readonly authUrl =
-    process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001';
+  constructor(private readonly jwt: JwtService) {}
 
-  async validate(authHeader?: string): Promise<JwtPayload | null> {
+  validate(authHeader?: string): JwtPayload | null {
     if (!authHeader?.startsWith('Bearer ')) return null;
     const token = authHeader.slice(7);
     try {
-      const { data } = await axios.post(`${this.authUrl}/validate`, {
-        token,
-      });
-      return data as JwtPayload;
+      return this.jwt.verify<JwtPayload>(token);
     } catch {
       throw new UnauthorizedException('Недействительный токен');
     }
   }
 
-  requireAuth(authHeader?: string): Promise<JwtPayload> {
-    return this.validate(authHeader).then((payload) => {
-      if (!payload) throw new UnauthorizedException('Требуется авторизация');
-      return payload;
-    });
+  requireAuth(authHeader?: string): JwtPayload {
+    const payload = this.validate(authHeader);
+    if (!payload) throw new UnauthorizedException('Требуется авторизация');
+    return payload;
   }
 
-  requireAdmin(authHeader?: string): Promise<JwtPayload> {
-    return this.requireAuth(authHeader).then((payload) => {
-      if (payload.role !== 'admin') {
-        throw new ForbiddenException('Требуются права администратора');
-      }
-      return payload;
-    });
+  requireAdmin(authHeader?: string): JwtPayload {
+    const payload = this.requireAuth(authHeader);
+    if (payload.role !== 'admin') {
+      throw new ForbiddenException('Требуются права администратора');
+    }
+    return payload;
   }
 }
