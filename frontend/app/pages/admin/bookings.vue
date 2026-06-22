@@ -169,26 +169,8 @@ function statusLabel(status: string) {
 }
 
 .admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: $font-size-sm;
+  @include admin-table;
   margin-top: $space-4;
-
-  th,
-  td {
-    padding: $space-3 $space-4;
-    text-align: left;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  th {
-    color: var(--color-text-muted);
-  }
-
-  &__muted {
-    color: var(--color-text-muted);
-    font-family: monospace;
-  }
 
   &__actions {
     text-align: right;
@@ -196,26 +178,7 @@ function statusLabel(status: string) {
 }
 
 .admin-status {
-  font-size: $font-size-xs;
-  padding: $space-1 $space-2;
-  border-radius: $radius-full;
-  background: var(--color-surface-elevated);
-  color: var(--color-text-secondary);
-
-  &--confirmed {
-    background: rgba(61, 107, 79, 0.12);
-    color: var(--color-primary);
-  }
-
-  &--cancelled {
-    background: rgba(192, 57, 43, 0.1);
-    color: #c0392b;
-  }
-
-  &--completed {
-    background: rgba(41, 128, 185, 0.1);
-    color: #2980b9;
-  }
+  @include admin-status;
 }
 
 .admin-empty {

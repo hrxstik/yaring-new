@@ -215,27 +215,7 @@ async function remove(id: string) {
 }
 
 .admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: $font-size-sm;
-
-  th,
-  td {
-    padding: $space-3 $space-4;
-    text-align: left;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  th {
-    color: var(--color-text-muted);
-    font-weight: 500;
-  }
-
-  &__actions {
-    display: flex;
-    gap: $space-2;
-    justify-content: flex-end;
-  }
+  @include admin-table;
 }
 
 .entity-form {
