@@ -5,6 +5,8 @@
       <AppButton size="sm" @click="openCreate">Добавить</AppButton>
     </div>
 
+    <AppAlert v-if="removeError" :message="removeError" class="admin-entities__error" />
+
     <div v-if="loading" class="admin-skeleton">
       <AppSkeleton v-for="n in 5" :key="n" height="48px" />
     </div>
@@ -92,6 +94,7 @@ const drawerOpen = ref(false);
 const editingId = ref<string | null>(null);
 const saving = ref(false);
 const error = ref<string | null>(null);
+const removeError = ref<string | null>(null);
 
 const form = reactive({
   name: '',
@@ -187,8 +190,13 @@ async function save() {
 
 async function remove(id: string) {
   if (!confirm('Удалить объект?')) return;
-  await request(`/entities/${id}`, { method: 'DELETE' });
-  await load();
+  removeError.value = null;
+  try {
+    await request(`/entities/${id}`, { method: 'DELETE' });
+    await load();
+  } catch (e) {
+    removeError.value = formatApiError(e);
+  }
 }
 </script>
 
@@ -198,7 +206,11 @@ async function remove(id: string) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: $space-6;
+    margin-bottom: $space-4;
+  }
+
+  &__error {
+    margin-bottom: $space-4;
   }
 }
 
