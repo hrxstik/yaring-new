@@ -68,6 +68,7 @@ import type { BookableEntity, Availability, Booking } from '~/types';
 import { formatRange, formatTimeRange, localTodayIso, addDaysIso, daysBetweenIso } from '~/utils/calendar';
 
 useHead({ title: 'Бронирование — Яринг' });
+useSeoMeta({ description: 'Забронируйте домик, баню или беседку на базе отдыха Яринг онлайн.' });
 
 const auth = useAuthStore();
 const route = useRoute();

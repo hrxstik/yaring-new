@@ -14,6 +14,7 @@
 
 <script setup lang="ts">
 useHead({ title: 'Контакты — Яринг' });
+useSeoMeta({ description: 'Контакты базы отдыха Яринг — телефон, адрес и карта проезда.' });
 </script>
 
 <style scoped lang="scss">

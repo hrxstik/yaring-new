@@ -70,6 +70,12 @@ import { CalendarCheck, House, Shield, Leaf, Map, Trees, Users } from 'lucide-vu
 import type { BookableEntity } from '~/types';
 
 useHead({ title: 'База отдыха «Яринг»' });
+useSeoMeta({
+  description: 'База отдыха Яринг — уютные домики, баня и беседки у озера и леса. Онлайн-бронирование 24/7.',
+  ogTitle: 'База отдыха «Яринг»',
+  ogDescription: 'Домики, баня и беседки у озера. Бронируйте онлайн без выходных.',
+  ogType: 'website',
+});
 
 const { request } = useApi();
 const entities = ref<BookableEntity[]>([]);
