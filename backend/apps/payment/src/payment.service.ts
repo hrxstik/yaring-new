@@ -9,6 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import axios, { AxiosError } from 'axios';
+import { BOOKING_RULES, parseIsoDate } from '@app/common';
 import { PaymentRecord } from './entities/payment.entity';
 
 @Injectable()
@@ -148,16 +149,80 @@ export class PaymentService {
     return this.getPayment(payment.id, userId);
   }
 
+  async cancelWithRefund(bookingId: string, userId: string, isAdmin: boolean) {
+    const booking = await this.fetchBooking(bookingId);
+
+    if (!isAdmin && booking.userId !== userId) {
+      throw new ForbiddenException('Нет доступа к бронированию');
+    }
+    if (booking.status !== 'confirmed') {
+      throw new BadRequestException('Бронь не в статусе confirmed');
+    }
+
+    const payment = await this.payments.findOne({
+      where: { bookingId, status: 'succeeded' },
+      order: { createdAt: 'DESC' },
+    });
+
+    const refundAmount = this.calcRefundAmount(
+      Number(booking.totalPrice),
+      booking.startDate,
+    );
+
+    await this.cancelBooking(bookingId, userId, isAdmin);
+
+    if (!payment || refundAmount <= 0) {
+      return { refundAmount: 0, message: 'Возврат не предусмотрен по условиям отмены' };
+    }
+
+    if (payment.yookassaPaymentId?.startsWith('mock-')) {
+      return { refundAmount, message: `Mock-возврат: ${refundAmount} ₽` };
+    }
+
+    const shopId = process.env.YOOKASSA_SHOP_ID;
+    const secretKey = process.env.YOOKASSA_SECRET_KEY;
+    if (!shopId || !secretKey) {
+      return { refundAmount, message: `Возврат ${refundAmount} ₽ (YooKassa не настроена)` };
+    }
+
+    const auth = Buffer.from(`${shopId}:${secretKey}`).toString('base64');
+    const { data } = await axios.post(
+      'https://api.yookassa.ru/v3/refunds',
+      {
+        payment_id: payment.yookassaPaymentId,
+        amount: { value: refundAmount.toFixed(2), currency: 'RUB' },
+        description: `Возврат по отмене брони ${bookingId}`,
+      },
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          'Idempotence-Key': `refund-${payment.id}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    this.logger.log(`YooKassa refund created: ${data.id} for ${refundAmount} RUB`);
+    return { refundAmount, yookassaRefundId: data.id, message: `Возврат ${refundAmount} ₽ инициирован` };
+  }
+
+  private calcRefundAmount(totalPrice: number, startDate: string): number {
+    const start = parseIsoDate(startDate);
+    if (!start) return 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daysUntilCheckIn = Math.ceil((start.getTime() - today.getTime()) / 86400000);
+
+    if (daysUntilCheckIn >= BOOKING_RULES.cancellationFreeDays) return totalPrice;
+    if (daysUntilCheckIn >= BOOKING_RULES.cancellationPartialDays) return Math.round(totalPrice * 0.5);
+    return 0;
+  }
+
   private async fetchBooking(bookingId: string) {
-    const bookingUrl =
-      process.env.BOOKING_SERVICE_URL ?? 'http://localhost:3003';
+    const bookingUrl = process.env.BOOKING_SERVICE_URL ?? 'http://localhost:3003';
     try {
       const { data } = await axios.get(`${bookingUrl}/bookings/${bookingId}`);
-      return data as {
-        userId: string;
-        status: string;
-        totalPrice: number;
-      };
+      return data as { userId: string; status: string; totalPrice: number; startDate: string };
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 404) {
         throw new NotFoundException('Бронь не найдена');
@@ -166,11 +231,24 @@ export class PaymentService {
     }
   }
 
+  private async cancelBooking(bookingId: string, userId: string, isAdmin: boolean) {
+    const bookingUrl = process.env.BOOKING_SERVICE_URL ?? 'http://localhost:3003';
+    const secret = process.env.INTERNAL_SERVICE_SECRET;
+    await axios.post(
+      `${bookingUrl}/bookings/${bookingId}/cancel`,
+      {},
+      {
+        headers: {
+          'x-user-id': userId,
+          'x-user-role': isAdmin ? 'admin' : 'user',
+          ...(secret ? { 'x-internal-secret': secret } : {}),
+        },
+      },
+    );
+  }
+
   private async confirmBooking(bookingId: string, paymentId: string) {
-    const bookingUrl =
-      process.env.BOOKING_SERVICE_URL ?? 'http://localhost:3003';
-    await axios.post(`${bookingUrl}/bookings/${bookingId}/confirm`, {
-      paymentId,
-    });
+    const bookingUrl = process.env.BOOKING_SERVICE_URL ?? 'http://localhost:3003';
+    await axios.post(`${bookingUrl}/bookings/${bookingId}/confirm`, { paymentId });
   }
 }

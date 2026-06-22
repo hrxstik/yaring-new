@@ -181,6 +181,18 @@ export class GatewayController {
     });
   }
 
+  @Post('bookings/:id/cancel-refund')
+  cancelWithRefund(
+    @Headers('authorization') authHeader: string,
+    @Param('id') id: string,
+  ) {
+    const user = this.auth.requireAuth(authHeader);
+    return this.proxy.forward('payment', `/bookings/${id}/cancel-refund`, {
+      method: 'POST',
+      headers: { 'x-user-id': user.sub, 'x-user-role': user.role },
+    });
+  }
+
   @Post('payments')
   createPayment(
     @Headers('authorization') authHeader: string,

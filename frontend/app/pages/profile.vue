@@ -216,12 +216,18 @@ async function payBooking(booking: Booking) {
 }
 
 async function cancelBooking(id: string) {
-  if (!confirm('Отменить бронирование?')) return;
+  if (!confirm('Отменить бронирование?\nВозврат рассчитывается по политике отмены.')) return;
 
   actionError.value = null;
   try {
-    await request(`/bookings/${id}/cancel`, { method: 'POST' });
+    const result = await request<{ refundAmount: number; message: string }>(
+      `/bookings/${id}/cancel-refund`,
+      { method: 'POST' },
+    );
     await loadBookings();
+    if (result.refundAmount > 0) {
+      alert(result.message);
+    }
   } catch (e) {
     actionError.value = formatApiError(e);
   }

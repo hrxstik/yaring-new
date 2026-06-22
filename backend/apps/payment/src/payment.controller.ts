@@ -48,6 +48,15 @@ export class PaymentController {
     return this.payment.mockComplete(id, userId);
   }
 
+  @Post('bookings/:bookingId/cancel-refund')
+  cancelWithRefund(
+    @Param('bookingId') bookingId: string,
+    @Headers('x-user-id') userId: string,
+    @Headers('x-user-role') role?: string,
+  ) {
+    return this.payment.cancelWithRefund(bookingId, userId, role === 'admin');
+  }
+
   @Post('webhook/yookassa')
   webhook(
     @Req() req: RawBodyRequest<Request>,
