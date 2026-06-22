@@ -3,6 +3,7 @@
     <div v-if="open" class="drawer">
       <button type="button" class="drawer__overlay" aria-label="Закрыть" @click="$emit('close')" />
       <aside
+        ref="panelRef"
         class="drawer__panel"
         :class="{ 'drawer__panel--wide': wide }"
         role="dialog"
@@ -38,6 +39,15 @@
 <script setup lang="ts">
 import { ChevronLeft, X } from 'lucide-vue-next';
 
+const FOCUSABLE = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
 const props = defineProps<{
   open: boolean;
   title: string;
@@ -47,8 +57,36 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: []; back: [] }>();
 
-function onEscape(event: KeyboardEvent) {
-  if (event.key === 'Escape') emit('close');
+const panelRef = ref<HTMLElement | null>(null);
+let previouslyFocused: HTMLElement | null = null;
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    emit('close');
+    return;
+  }
+  if (event.key !== 'Tab' || !panelRef.value) return;
+
+  const focusable = Array.from(
+    panelRef.value.querySelectorAll<HTMLElement>(FOCUSABLE),
+  ).filter((el) => !el.closest('[inert]'));
+
+  if (!focusable.length) { event.preventDefault(); return; }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey) {
+    if (document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    }
+  } else {
+    if (document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 }
 
 watch(
@@ -57,11 +95,18 @@ watch(
     if (!import.meta.client) return;
 
     if (isOpen) {
+      previouslyFocused = document.activeElement as HTMLElement;
       document.body.style.overflow = 'hidden';
-      document.addEventListener('keydown', onEscape);
+      document.addEventListener('keydown', onKeydown);
+      nextTick(() => {
+        const first = panelRef.value?.querySelector<HTMLElement>(FOCUSABLE);
+        first?.focus();
+      });
     } else {
       document.body.style.overflow = '';
-      document.removeEventListener('keydown', onEscape);
+      document.removeEventListener('keydown', onKeydown);
+      previouslyFocused?.focus();
+      previouslyFocused = null;
     }
   },
 );
@@ -69,7 +114,7 @@ watch(
 onUnmounted(() => {
   if (!import.meta.client) return;
   document.body.style.overflow = '';
-  document.removeEventListener('keydown', onEscape);
+  document.removeEventListener('keydown', onKeydown);
 });
 </script>
 
