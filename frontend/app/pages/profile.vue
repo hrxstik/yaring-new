@@ -19,6 +19,18 @@
     <AppAlert v-if="actionError" :message="actionError" class="profile-page__action-error" />
 
     <section class="profile-page__section">
+      <h2>Профиль</h2>
+      <form class="profile-page__edit-form" @submit.prevent="saveProfile">
+        <AppInput v-model="editName" label="Имя" :disabled="savingProfile" />
+        <div class="profile-page__edit-actions">
+          <AppButton type="submit" size="sm" :loading="savingProfile">Сохранить</AppButton>
+        </div>
+        <AppAlert v-if="profileError" :message="profileError" />
+        <AppAlert v-if="profileSuccess" variant="success" message="Имя обновлено" />
+      </form>
+    </section>
+
+    <section class="profile-page__section">
       <h2>Мои бронирования</h2>
 
       <div v-if="loading" class="profile-page__skeletons">
@@ -56,7 +68,9 @@
                 {{ formatRange(booking.startDate, booking.endDate) }}
               </template>
             </p>
-            <span class="booking-item__status">{{ statusLabel(booking.status) }}</span>
+            <span class="booking-item__status" :class="`booking-item__status--${booking.status}`">
+              {{ statusLabel(booking.status) }}
+            </span>
           </div>
           <div class="booking-item__side">
             <strong>{{ booking.totalPrice.toLocaleString('ru-RU') }} ₽</strong>
@@ -100,6 +114,34 @@ const loading = ref(true);
 const loadError = ref<string | null>(null);
 const actionError = ref<string | null>(null);
 const payingId = ref<string | null>(null);
+
+const editName = ref(auth.user?.name ?? '');
+const savingProfile = ref(false);
+const profileError = ref<string | null>(null);
+const profileSuccess = ref(false);
+
+watch(() => auth.user?.name, (name) => {
+  if (name && !editName.value) editName.value = name;
+}, { immediate: true });
+
+async function saveProfile() {
+  savingProfile.value = true;
+  profileError.value = null;
+  profileSuccess.value = false;
+  try {
+    const updated = await request<{ name: string }>('/auth/profile', {
+      method: 'PATCH',
+      body: JSON.stringify({ name: editName.value.trim() }),
+    });
+    if (auth.user) auth.user.name = updated.name;
+    profileSuccess.value = true;
+    setTimeout(() => { profileSuccess.value = false; }, 3000);
+  } catch (e) {
+    profileError.value = formatApiError(e);
+  } finally {
+    savingProfile.value = false;
+  }
+}
 
 onMounted(async () => {
   await completeMockPaymentFromQuery();
@@ -207,6 +249,20 @@ async function cancelBooking(id: string) {
 
   &__section {
     @include card;
+    margin-bottom: $space-5;
+  }
+
+  &__edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+    max-width: 380px;
+    margin-top: $space-4;
+  }
+
+  &__edit-actions {
+    display: flex;
+    gap: $space-3;
   }
 
   &__empty {
@@ -262,6 +318,21 @@ async function cancelBooking(id: string) {
     background: var(--color-surface-elevated);
     border-radius: $radius-full;
     color: var(--color-text-secondary);
+
+    &--confirmed {
+      background: rgba(61, 107, 79, 0.12);
+      color: var(--color-primary);
+    }
+
+    &--cancelled {
+      background: rgba(192, 57, 43, 0.1);
+      color: #c0392b;
+    }
+
+    &--completed {
+      background: rgba(41, 128, 185, 0.1);
+      color: #2980b9;
+    }
   }
 
   &__side {
