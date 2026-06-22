@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Headers, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, UseGuards } from '@nestjs/common';
+import { createThrottle } from '@app/common';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -7,27 +8,36 @@ import {
   VerifyPhoneDto,
 } from './auth.dto';
 
+const registerThrottle = createThrottle(5, 60_000);    // 5 per minute
+const verifyThrottle = createThrottle(10, 60_000);     // 10 per minute
+const resendThrottle = createThrottle(3, 300_000);     // 3 per 5 min
+const loginThrottle = createThrottle(10, 60_000);      // 10 per minute
+
 @Controller()
 export class AuthController {
   constructor(private readonly auth: AuthService) {
     void this.auth.ensureAdminSeed();
   }
 
+  @UseGuards(registerThrottle)
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.auth.register(dto.phone, dto.password, dto.name);
   }
 
+  @UseGuards(verifyThrottle)
   @Post('verify-phone')
   verifyPhone(@Body() dto: VerifyPhoneDto) {
     return this.auth.verifyPhone(dto.phone, dto.code);
   }
 
+  @UseGuards(resendThrottle)
   @Post('resend-code')
   resendCode(@Body() dto: ResendCodeDto) {
     return this.auth.resendCode(dto.phone);
   }
 
+  @UseGuards(loginThrottle)
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto.phone, dto.password);
