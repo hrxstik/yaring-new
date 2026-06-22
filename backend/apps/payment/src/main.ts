@@ -3,7 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { PaymentModule } from './payment.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(PaymentModule);
+  const app = await NestFactory.create(PaymentModule, { rawBody: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors({ origin: true, credentials: true });
   await app.listen(process.env.PAYMENT_PORT ?? 3004);

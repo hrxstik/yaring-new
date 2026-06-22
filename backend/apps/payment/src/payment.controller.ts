@@ -1,4 +1,17 @@
-import { Body, Controller, Get, Headers, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Post,
+  RawBodyRequest,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { createHmac } from 'crypto';
+import type { Request } from 'express';
 import { InternalGuard } from '@app/common';
 import { PaymentService } from './payment.service';
 
@@ -36,12 +49,24 @@ export class PaymentController {
   }
 
   @Post('webhook/yookassa')
-  webhook(@Body() payload: unknown) {
-    return this.payment.handleWebhook(
-      payload as {
-        event: string;
-        object: { id: string; status: string; metadata?: Record<string, string> };
-      },
-    );
+  webhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('x-yookassa-signature') signature?: string,
+    @Body()
+    payload?: {
+      event: string;
+      object: { id: string; status: string; metadata?: Record<string, string> };
+    },
+  ) {
+    const secret = process.env.YOOKASSA_WEBHOOK_SECRET;
+    if (secret && req.rawBody) {
+      const expected = createHmac('sha256', secret)
+        .update(req.rawBody)
+        .digest('hex');
+      if (signature !== expected) {
+        throw new BadRequestException('Invalid webhook signature');
+      }
+    }
+    return this.payment.handleWebhook(payload!);
   }
 }
