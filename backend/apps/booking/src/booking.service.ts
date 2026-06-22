@@ -1,6 +1,7 @@
 import {
   Injectable,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
   ConflictException,
   BadGatewayException,
@@ -118,7 +119,7 @@ export class BookingService {
     const booking = await this.bookings.findOne({ where: { id: bookingId } });
     if (!booking) throw new NotFoundException('Бронь не найдена');
     if (!isAdmin && booking.userId !== userId) {
-      throw new BadRequestException('Нет доступа');
+      throw new ForbiddenException('Нет доступа');
     }
     booking.status = 'cancelled';
     await this.bookings.save(booking);

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import axios from 'axios';
 import type { JwtPayload } from '@app/common';
 
@@ -30,7 +30,7 @@ export class AuthGuardService {
   requireAdmin(authHeader?: string): Promise<JwtPayload> {
     return this.requireAuth(authHeader).then((payload) => {
       if (payload.role !== 'admin') {
-        throw new UnauthorizedException('Требуются права администратора');
+        throw new ForbiddenException('Требуются права администратора');
       }
       return payload;
     });
