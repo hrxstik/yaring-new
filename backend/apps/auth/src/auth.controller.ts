@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Headers, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Patch, Post, UseGuards } from '@nestjs/common';
 import { createThrottle } from '@app/common';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
   RegisterDto,
   ResendCodeDto,
+  UpdateProfileDto,
   VerifyPhoneDto,
 } from './auth.dto';
 
@@ -54,6 +55,18 @@ export class AuthController {
     if (!token) return null;
     const payload = this.auth.validateToken(token);
     return payload.then((p) => this.auth.me(p.sub));
+  }
+
+  @Patch('profile')
+  updateProfile(
+    @Headers('authorization') authHeader?: string,
+    @Body() dto?: UpdateProfileDto,
+  ) {
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token || !dto) return null;
+    return this.auth.validateToken(token).then((p) =>
+      this.auth.updateProfile(p.sub, dto.name),
+    );
   }
 
   @Post('validate')

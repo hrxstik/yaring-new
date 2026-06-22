@@ -120,6 +120,14 @@ export class AuthService {
     return { message: 'Код отправлен повторно' };
   }
 
+  async updateProfile(userId: string, name: string) {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Пользователь не найден');
+    user.name = name.trim();
+    await this.users.save(user);
+    return this.toProfile(user);
+  }
+
   async validateToken(token: string): Promise<JwtPayload> {
     try {
       return this.jwt.verify<JwtPayload>(token);

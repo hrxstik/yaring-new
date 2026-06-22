@@ -6,6 +6,7 @@ import {
   Headers,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -68,6 +69,19 @@ export class GatewayController {
     await this.auth.requireAuth(authHeader);
     return this.proxy.forward('auth', '/me', {
       headers: { Authorization: authHeader! },
+    });
+  }
+
+  @Patch('auth/profile')
+  async updateProfile(
+    @Headers('authorization') authHeader: string,
+    @Body() body: unknown,
+  ) {
+    await this.auth.requireAuth(authHeader);
+    return this.proxy.forward('auth', '/profile', {
+      method: 'PATCH',
+      data: body,
+      headers: { Authorization: authHeader },
     });
   }
 

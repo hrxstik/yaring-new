@@ -45,3 +45,9 @@ export class ResendCodeDto {
   @Matches(PHONE_PATTERN, { message: 'Укажите корректный телефон' })
   phone!: string;
 }
+
+export class UpdateProfileDto {
+  @IsString()
+  @MinLength(2)
+  name!: string;
+}
