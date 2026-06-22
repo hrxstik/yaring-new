@@ -5,27 +5,68 @@ import {
   NotFoundException,
   ConflictException,
   BadGatewayException,
+  Logger,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, LessThan } from 'typeorm';
 import axios, { AxiosError } from 'axios';
 import {
   BOOKING_RULES,
   daysBetween,
   parseIsoDate,
   timeToMinutes,
+  toIsoDate,
 } from '@app/common';
 import { BookingRecord } from './entities/booking.entity';
 import type { CreateBookingDto } from './booking.dto';
 
 const PENDING_PAYMENT_TTL_MS = 15 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;   // every 10 min
+const COMPLETE_INTERVAL_MS = 60 * 60 * 1000;  // every 1 hour
 
 @Injectable()
-export class BookingService {
+export class BookingService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(BookingService.name);
+
   constructor(
     @InjectRepository(BookingRecord)
     private readonly bookings: Repository<BookingRecord>,
   ) {}
+
+  onApplicationBootstrap() {
+    setInterval(() => void this.cancelExpiredPending(), CLEANUP_INTERVAL_MS);
+    setInterval(() => void this.autoCompleteBookings(), COMPLETE_INTERVAL_MS);
+    void this.cancelExpiredPending();
+    void this.autoCompleteBookings();
+  }
+
+  async cancelExpiredPending() {
+    const cutoff = new Date(Date.now() - PENDING_PAYMENT_TTL_MS);
+    const expired = await this.bookings.find({
+      where: { status: 'pending_payment', createdAt: LessThan(cutoff) },
+    });
+    if (!expired.length) return;
+    for (const b of expired) {
+      b.status = 'cancelled';
+    }
+    await this.bookings.save(expired);
+    this.logger.log(`Cancelled ${expired.length} expired pending_payment bookings`);
+  }
+
+  async autoCompleteBookings() {
+    const today = toIsoDate(new Date());
+    const due = await this.bookings.find({
+      where: { status: 'confirmed' },
+    });
+    const toComplete = due.filter((b) => b.endDate < today);
+    if (!toComplete.length) return;
+    for (const b of toComplete) {
+      b.status = 'completed';
+    }
+    await this.bookings.save(toComplete);
+    this.logger.log(`Auto-completed ${toComplete.length} bookings`);
+  }
 
   async create(userId: string, dto: CreateBookingDto) {
     const entity = await this.fetchEntity(dto.entityId);
