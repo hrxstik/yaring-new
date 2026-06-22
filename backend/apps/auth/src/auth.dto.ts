@@ -51,3 +51,23 @@ export class UpdateProfileDto {
   @MinLength(2)
   name!: string;
 }
+
+export class ResetPasswordRequestDto {
+  @IsString()
+  @Matches(PHONE_PATTERN, { message: 'Укажите корректный телефон' })
+  phone!: string;
+}
+
+export class ResetPasswordConfirmDto {
+  @IsString()
+  @Matches(PHONE_PATTERN, { message: 'Укажите корректный телефон' })
+  phone!: string;
+
+  @IsString()
+  @Length(6, 6)
+  code!: string;
+
+  @IsString()
+  @MinLength(6)
+  newPassword!: string;
+}

@@ -20,6 +20,9 @@
         <AppButton type="submit" block :loading="loading">Войти</AppButton>
       </form>
       <p class="auth-page__footer">
+        <NuxtLink to="/reset-password">Забыли пароль?</NuxtLink>
+      </p>
+      <p class="auth-page__footer">
         Нет аккаунта?
         <NuxtLink to="/register">Зарегистрироваться</NuxtLink>
       </p>

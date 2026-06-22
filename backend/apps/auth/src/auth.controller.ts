@@ -5,6 +5,8 @@ import {
   LoginDto,
   RegisterDto,
   ResendCodeDto,
+  ResetPasswordConfirmDto,
+  ResetPasswordRequestDto,
   UpdateProfileDto,
   VerifyPhoneDto,
 } from './auth.dto';
@@ -67,6 +69,18 @@ export class AuthController {
     return this.auth.validateToken(token).then((p) =>
       this.auth.updateProfile(p.sub, dto.name),
     );
+  }
+
+  @UseGuards(resendThrottle)
+  @Post('reset-password/request')
+  resetPasswordRequest(@Body() dto: ResetPasswordRequestDto) {
+    return this.auth.requestPasswordReset(dto.phone);
+  }
+
+  @UseGuards(verifyThrottle)
+  @Post('reset-password/confirm')
+  resetPasswordConfirm(@Body() dto: ResetPasswordConfirmDto) {
+    return this.auth.confirmPasswordReset(dto.phone, dto.code, dto.newPassword);
   }
 
   @Post('validate')

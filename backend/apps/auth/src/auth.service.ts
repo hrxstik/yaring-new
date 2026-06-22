@@ -120,6 +120,27 @@ export class AuthService {
     return { message: 'Код отправлен повторно' };
   }
 
+  async requestPasswordReset(phone: string) {
+    const normalized = this.normalizePhone(phone);
+    const user = await this.users.findOne({ where: { phone: normalized } });
+    if (!user || !user.phoneVerified) {
+      return { message: 'Если аккаунт существует, код отправлен по SMS' };
+    }
+    await this.sendCode(normalized, 'reset');
+    return { message: 'Если аккаунт существует, код отправлен по SMS' };
+  }
+
+  async confirmPasswordReset(phone: string, code: string, newPassword: string) {
+    const normalized = this.normalizePhone(phone);
+    await this.validateCode(normalized, code, 'reset');
+    const user = await this.users.findOne({ where: { phone: normalized } });
+    if (!user) throw new NotFoundException('Пользователь не найден');
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.users.save(user);
+    await this.codes.delete({ phone: normalized, purpose: 'reset' });
+    return this.issueTokens(user);
+  }
+
   async updateProfile(userId: string, name: string) {
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Пользователь не найден');
