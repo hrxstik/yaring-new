@@ -12,7 +12,12 @@
             и корпоративного отдыха.
           </p>
           <div class="footer__social">
-            <a href="#" aria-label="ВКонтакте">
+            <a
+              href="https://vk.com/yaring_base"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ВКонтакте"
+            >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   d="M13.19 17.25c-5.47 0-8.59-3.75-8.72-9.99h2.74c.09 4.58 2.11 6.52 3.71 6.92V7.26h2.58v3.95c1.58-.17 3.24-1.97 3.8-3.95h2.58c-.43 2.44-2.23 4.24-3.51 4.98 1.28.6 3.33 2.17 4.11 5.01h-2.84c-.61-1.9-2.13-3.37-4.14-3.57v3.57h-.31Z"
@@ -20,7 +25,12 @@
                 />
               </svg>
             </a>
-            <a href="#" aria-label="Telegram">
+            <a
+              href="https://t.me/yaring_base"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Telegram"
+            >
               <Send :size="18" />
             </a>
           </div>
@@ -46,8 +56,14 @@
         <div class="footer__col">
           <h4>Контакты</h4>
           <ul class="footer__contacts">
-            <li><Phone :size="16" /> +7 (900) 000-00-00</li>
-            <li><MapPin :size="16" /> Яринг, координаты на карте</li>
+            <li>
+              <Phone :size="16" />
+              <a href="tel:+79000000000">+7 (900) 000-00-00</a>
+            </li>
+            <li>
+              <MapPin :size="16" />
+              <NuxtLink to="/contacts">Яринг, координаты на карте</NuxtLink>
+            </li>
           </ul>
         </div>
 
