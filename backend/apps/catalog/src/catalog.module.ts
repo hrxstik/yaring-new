@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { createSqlJsConfig } from '@app/common';
+import { createDatabaseConfig } from '@app/common';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
 import { EntityRecord } from './entities/entity.entity';
@@ -13,8 +13,8 @@ const catalogEntities = [EntityRecord, ContentPageRecord];
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot(
-      createSqlJsConfig(
-        process.env.CATALOG_DB ?? 'data/catalog.sqljs',
+      createDatabaseConfig(
+        process.env.CATALOG_DB_URL ?? process.env.CATALOG_DB ?? 'data/catalog.sqljs',
         catalogEntities,
       ),
     ),

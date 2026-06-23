@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { createSqlJsConfig } from '@app/common';
+import { createDatabaseConfig } from '@app/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { SmsService } from './sms.service';
@@ -15,7 +15,7 @@ const authEntities = [UserEntity, VerificationCodeEntity];
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot(
-      createSqlJsConfig(process.env.AUTH_DB ?? 'data/auth.sqljs', authEntities),
+      createDatabaseConfig(process.env.AUTH_DB_URL ?? process.env.AUTH_DB ?? 'data/auth.sqljs', authEntities),
     ),
     TypeOrmModule.forFeature([UserEntity, VerificationCodeEntity]),
     JwtModule.register({
