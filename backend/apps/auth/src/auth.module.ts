@@ -24,7 +24,8 @@ const authEntities = [UserEntity, VerificationCodeEntity];
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET ?? 'yaring-dev-secret-change-me',
-      signOptions: { expiresIn: process.env.JWT_ACCESS_EXPIRY ?? '15m' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      signOptions: { expiresIn: (process.env.JWT_ACCESS_EXPIRY ?? '15m') as any },
     }),
     CacheModule,
   ],

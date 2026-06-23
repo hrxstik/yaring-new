@@ -1,8 +1,9 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpException,
+  HttpStatus,
   Injectable,
-  TooManyRequestsException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 
@@ -39,8 +40,9 @@ export class ThrottleGuard implements CanActivate {
 
     entry.count += 1;
     if (entry.count > this.limit) {
-      throw new TooManyRequestsException(
+      throw new HttpException(
         `Слишком много запросов. Попробуйте через ${Math.ceil((entry.resetAt - now) / 1000)} с.`,
+        HttpStatus.TOO_MANY_REQUESTS,
       );
     }
     return true;

@@ -218,10 +218,12 @@ export class AuthService {
 
     const accessToken = this.jwt.sign(
       { ...payload, jti },
-      { expiresIn: process.env.JWT_ACCESS_EXPIRY ?? '15m' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { expiresIn: (process.env.JWT_ACCESS_EXPIRY ?? '15m') as any },
     );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const refreshToken = this.jwt.sign(payload, {
-      expiresIn: process.env.JWT_REFRESH_EXPIRY ?? '30d',
+      expiresIn: (process.env.JWT_REFRESH_EXPIRY ?? '30d') as any,
     });
 
     await this.cache.set(
