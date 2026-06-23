@@ -5,3 +5,5 @@ export * from './utils/date';
 export * from './utils/pagination';
 export * from './guards/internal.guard';
 export * from './guards/throttle.guard';
+export * from './cache/cache.service';
+export * from './cache/cache.module';
