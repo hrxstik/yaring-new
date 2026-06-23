@@ -21,6 +21,7 @@ export class GatewayController {
     private readonly auth: AuthGuardService,
   ) {}
 
+  // ─── Auth ────────────────────────────────────────────────────────────────
   @Post('auth/register')
   register(@Body() body: unknown) {
     return this.proxy.forward('auth', '/register', { method: 'POST', data: body });
@@ -41,6 +42,35 @@ export class GatewayController {
     return this.proxy.forward('auth', '/login', { method: 'POST', data: body });
   }
 
+  @Post('auth/refresh')
+  refresh(@Body() body: unknown) {
+    return this.proxy.forward('auth', '/refresh', { method: 'POST', data: body });
+  }
+
+  @Post('auth/logout')
+  async logout(
+    @Headers('authorization') authHeader: string | undefined,
+    @Body() body: unknown,
+  ) {
+    return this.proxy.forward('auth', '/logout', {
+      method: 'POST',
+      data: body,
+      headers: authHeader ? { Authorization: authHeader } : {},
+    });
+  }
+
+  @Post('auth/logout-all')
+  async logoutAll(
+    @Headers('authorization') authHeader: string | undefined,
+    @Body() body: unknown,
+  ) {
+    return this.proxy.forward('auth', '/logout-all', {
+      method: 'POST',
+      data: body,
+      headers: authHeader ? { Authorization: authHeader } : {},
+    });
+  }
+
   @Post('auth/test-user')
   createTestUser(@Body() body: unknown) {
     if (process.env.E2E_TEST_MODE !== '1') throw new NotFoundException();
@@ -48,19 +78,17 @@ export class GatewayController {
   }
 
   @Get('auth/me')
-  me(@Headers('authorization') authHeader?: string) {
-    this.auth.requireAuth(authHeader);
-    return this.proxy.forward('auth', '/me', {
-      headers: { Authorization: authHeader! },
-    });
+  async me(@Headers('authorization') authHeader?: string) {
+    await this.auth.requireAuth(authHeader);
+    return this.proxy.forward('auth', '/me', { headers: { Authorization: authHeader! } });
   }
 
   @Patch('auth/profile')
-  updateProfile(
+  async updateProfile(
     @Headers('authorization') authHeader: string,
     @Body() body: unknown,
   ) {
-    this.auth.requireAuth(authHeader);
+    await this.auth.requireAuth(authHeader);
     return this.proxy.forward('auth', '/profile', {
       method: 'PATCH',
       data: body,
@@ -78,6 +106,7 @@ export class GatewayController {
     return this.proxy.forward('auth', '/reset-password/confirm', { method: 'POST', data: body });
   }
 
+  // ─── Catalog ─────────────────────────────────────────────────────────────
   @Get('entities')
   listEntities(@Query('all') all?: string) {
     return this.proxy.forward('catalog', `/entities?all=${all ?? 'false'}`);
@@ -89,30 +118,24 @@ export class GatewayController {
   }
 
   @Post('entities')
-  createEntity(
-    @Headers('authorization') authHeader: string,
-    @Body() body: unknown,
-  ) {
-    this.auth.requireAdmin(authHeader);
+  async createEntity(@Headers('authorization') authHeader: string, @Body() body: unknown) {
+    await this.auth.requireAdmin(authHeader);
     return this.proxy.forward('catalog', '/entities', { method: 'POST', data: body });
   }
 
   @Put('entities/:id')
-  updateEntity(
+  async updateEntity(
     @Headers('authorization') authHeader: string,
     @Param('id') id: string,
     @Body() body: unknown,
   ) {
-    this.auth.requireAdmin(authHeader);
+    await this.auth.requireAdmin(authHeader);
     return this.proxy.forward('catalog', `/entities/${id}`, { method: 'PUT', data: body });
   }
 
   @Delete('entities/:id')
-  deleteEntity(
-    @Headers('authorization') authHeader: string,
-    @Param('id') id: string,
-  ) {
-    this.auth.requireAdmin(authHeader);
+  async deleteEntity(@Headers('authorization') authHeader: string, @Param('id') id: string) {
+    await this.auth.requireAdmin(authHeader);
     return this.proxy.forward('catalog', `/entities/${id}`, { method: 'DELETE' });
   }
 
@@ -122,15 +145,16 @@ export class GatewayController {
   }
 
   @Put('pages/:slug')
-  updatePage(
+  async updatePage(
     @Headers('authorization') authHeader: string,
     @Param('slug') slug: string,
     @Body() body: unknown,
   ) {
-    this.auth.requireAdmin(authHeader);
+    await this.auth.requireAdmin(authHeader);
     return this.proxy.forward('catalog', `/pages/${slug}`, { method: 'PUT', data: body });
   }
 
+  // ─── Booking ─────────────────────────────────────────────────────────────
   @Get('availability/:entityId')
   availability(
     @Param('entityId') entityId: string,
@@ -141,11 +165,8 @@ export class GatewayController {
   }
 
   @Post('bookings')
-  createBooking(
-    @Headers('authorization') authHeader: string,
-    @Body() body: unknown,
-  ) {
-    const user = this.auth.requireAuth(authHeader);
+  async createBooking(@Headers('authorization') authHeader: string, @Body() body: unknown) {
+    const user = await this.auth.requireAuth(authHeader);
     return this.proxy.forward('booking', '/bookings', {
       method: 'POST',
       data: body,
@@ -154,27 +175,20 @@ export class GatewayController {
   }
 
   @Get('bookings/my')
-  myBookings(@Headers('authorization') authHeader: string) {
-    const user = this.auth.requireAuth(authHeader);
-    return this.proxy.forward('booking', '/bookings/my', {
-      headers: { 'x-user-id': user.sub },
-    });
+  async myBookings(@Headers('authorization') authHeader: string) {
+    const user = await this.auth.requireAuth(authHeader);
+    return this.proxy.forward('booking', '/bookings/my', { headers: { 'x-user-id': user.sub } });
   }
 
   @Get('bookings')
-  allBookings(@Headers('authorization') authHeader: string) {
-    const user = this.auth.requireAdmin(authHeader);
-    return this.proxy.forward('booking', '/bookings', {
-      headers: { 'x-user-role': user.role },
-    });
+  async allBookings(@Headers('authorization') authHeader: string) {
+    const user = await this.auth.requireAdmin(authHeader);
+    return this.proxy.forward('booking', '/bookings', { headers: { 'x-user-role': user.role } });
   }
 
   @Post('bookings/:id/cancel')
-  cancelBooking(
-    @Headers('authorization') authHeader: string,
-    @Param('id') id: string,
-  ) {
-    const user = this.auth.requireAuth(authHeader);
+  async cancelBooking(@Headers('authorization') authHeader: string, @Param('id') id: string) {
+    const user = await this.auth.requireAuth(authHeader);
     return this.proxy.forward('booking', `/bookings/${id}/cancel`, {
       method: 'POST',
       headers: { 'x-user-id': user.sub, 'x-user-role': user.role },
@@ -182,23 +196,21 @@ export class GatewayController {
   }
 
   @Post('bookings/:id/cancel-refund')
-  cancelWithRefund(
-    @Headers('authorization') authHeader: string,
-    @Param('id') id: string,
-  ) {
-    const user = this.auth.requireAuth(authHeader);
+  async cancelWithRefund(@Headers('authorization') authHeader: string, @Param('id') id: string) {
+    const user = await this.auth.requireAuth(authHeader);
     return this.proxy.forward('payment', `/bookings/${id}/cancel-refund`, {
       method: 'POST',
       headers: { 'x-user-id': user.sub, 'x-user-role': user.role },
     });
   }
 
+  // ─── Payment ─────────────────────────────────────────────────────────────
   @Post('payments')
-  createPayment(
+  async createPayment(
     @Headers('authorization') authHeader: string,
     @Body() body: { bookingId: string; amount: number; description: string },
   ) {
-    const user = this.auth.requireAuth(authHeader);
+    const user = await this.auth.requireAuth(authHeader);
     return this.proxy.forward('payment', '/payments', {
       method: 'POST',
       data: { ...body, userId: user.sub },
@@ -206,22 +218,14 @@ export class GatewayController {
   }
 
   @Get('payments/:id')
-  getPayment(
-    @Headers('authorization') authHeader: string,
-    @Param('id') id: string,
-  ) {
-    const user = this.auth.requireAuth(authHeader);
-    return this.proxy.forward('payment', `/payments/${id}`, {
-      headers: { 'x-user-id': user.sub },
-    });
+  async getPayment(@Headers('authorization') authHeader: string, @Param('id') id: string) {
+    const user = await this.auth.requireAuth(authHeader);
+    return this.proxy.forward('payment', `/payments/${id}`, { headers: { 'x-user-id': user.sub } });
   }
 
   @Post('payments/:id/mock-complete')
-  mockComplete(
-    @Headers('authorization') authHeader: string,
-    @Param('id') id: string,
-  ) {
-    const user = this.auth.requireAuth(authHeader);
+  async mockComplete(@Headers('authorization') authHeader: string, @Param('id') id: string) {
+    const user = await this.auth.requireAuth(authHeader);
     return this.proxy.forward('payment', `/payments/${id}/mock-complete`, {
       method: 'POST',
       headers: { 'x-user-id': user.sub },

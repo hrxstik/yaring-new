@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { CacheModule } from '@app/common';
 import { GatewayController } from './gateway.controller';
 import { ProxyService } from './proxy.service';
 import { AuthGuardService } from './auth-guard.service';
@@ -12,6 +13,7 @@ import { AuthGuardService } from './auth-guard.service';
       global: true,
       secret: process.env.JWT_SECRET ?? 'yaring-dev-secret-change-me',
     }),
+    CacheModule,
   ],
   controllers: [GatewayController],
   providers: [ProxyService, AuthGuardService],

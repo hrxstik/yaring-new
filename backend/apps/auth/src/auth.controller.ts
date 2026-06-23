@@ -3,6 +3,8 @@ import { createThrottle } from '@app/common';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
+  LogoutDto,
+  RefreshDto,
   RegisterDto,
   ResendCodeDto,
   ResetPasswordConfirmDto,
@@ -11,10 +13,10 @@ import {
   VerifyPhoneDto,
 } from './auth.dto';
 
-const registerThrottle = createThrottle(5, 60_000);    // 5 per minute
-const verifyThrottle = createThrottle(10, 60_000);     // 10 per minute
-const resendThrottle = createThrottle(3, 300_000);     // 3 per 5 min
-const loginThrottle = createThrottle(10, 60_000);      // 10 per minute
+const registerThrottle = createThrottle(5, 60_000);
+const verifyThrottle   = createThrottle(10, 60_000);
+const resendThrottle   = createThrottle(3, 300_000);
+const loginThrottle    = createThrottle(10, 60_000);
 
 @Controller()
 export class AuthController {
@@ -55,8 +57,30 @@ export class AuthController {
   me(@Headers('authorization') authHeader?: string) {
     const token = authHeader?.replace('Bearer ', '');
     if (!token) return null;
-    const payload = this.auth.validateToken(token);
-    return payload.then((p) => this.auth.me(p.sub));
+    return this.auth.validateToken(token).then((p) => this.auth.me(p.sub));
+  }
+
+  @Post('refresh')
+  refresh(@Body() dto: RefreshDto) {
+    return this.auth.refresh(dto.userId, dto.refreshToken);
+  }
+
+  @Post('logout')
+  logout(
+    @Body() dto: LogoutDto,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    const accessToken = authHeader?.replace('Bearer ', '');
+    return this.auth.logout(dto.userId, dto.refreshToken, accessToken);
+  }
+
+  @Post('logout-all')
+  logoutAll(
+    @Body('userId') userId: string,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    const accessToken = authHeader?.replace('Bearer ', '');
+    return this.auth.logoutAll(userId, accessToken);
   }
 
   @Patch('profile')
@@ -66,9 +90,7 @@ export class AuthController {
   ) {
     const token = authHeader?.replace('Bearer ', '');
     if (!token || !dto) return null;
-    return this.auth.validateToken(token).then((p) =>
-      this.auth.updateProfile(p.sub, dto.name),
-    );
+    return this.auth.validateToken(token).then((p) => this.auth.updateProfile(p.sub, dto.name));
   }
 
   @UseGuards(resendThrottle)
