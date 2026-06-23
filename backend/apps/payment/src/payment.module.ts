@@ -13,7 +13,7 @@ const paymentEntities = [PaymentRecord];
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot(
       createDatabaseConfig(
-        process.env.PAYMENT_DB_URL ?? process.env.PAYMENT_DB ?? 'data/payment.sqljs',
+        process.env.PAYMENT_DB_URL ?? 'postgresql://yaring:yaring_secret@localhost:5432/payment_db',
         paymentEntities,
       ),
     ),

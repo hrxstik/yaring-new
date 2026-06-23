@@ -13,7 +13,7 @@ const bookingEntities = [BookingRecord];
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot(
       createDatabaseConfig(
-        process.env.BOOKING_DB_URL ?? process.env.BOOKING_DB ?? 'data/booking.sqljs',
+        process.env.BOOKING_DB_URL ?? 'postgresql://yaring:yaring_secret@localhost:5432/booking_db',
         bookingEntities,
       ),
     ),

@@ -14,7 +14,7 @@ const catalogEntities = [EntityRecord, ContentPageRecord];
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot(
       createDatabaseConfig(
-        process.env.CATALOG_DB_URL ?? process.env.CATALOG_DB ?? 'data/catalog.sqljs',
+        process.env.CATALOG_DB_URL ?? 'postgresql://yaring:yaring_secret@localhost:5432/catalog_db',
         catalogEntities,
       ),
     ),

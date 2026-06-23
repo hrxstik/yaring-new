@@ -16,7 +16,7 @@ const authEntities = [UserEntity, VerificationCodeEntity];
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot(
       createDatabaseConfig(
-        process.env.AUTH_DB_URL ?? process.env.AUTH_DB ?? 'data/auth.sqljs',
+        process.env.AUTH_DB_URL ?? 'postgresql://yaring:yaring_secret@localhost:5432/auth_db',
         authEntities,
       ),
     ),
