@@ -81,14 +81,14 @@ async function verify() {
   loading.value = true;
   error.value = null;
   try {
-    const data = await request<{ accessToken: string; user: User }>(
+    const data = await request<{ accessToken: string; refreshToken: string; user: User }>(
       '/auth/verify-phone',
       {
         method: 'POST',
         body: JSON.stringify({ phone: phone.value, code: code.value }),
       },
     );
-    auth.setSession(data.accessToken, data.user);
+    auth.setSession(data.accessToken, data.user, data.refreshToken);
     await navigateTo('/profile');
   } catch (e) {
     error.value = formatApiError(e);

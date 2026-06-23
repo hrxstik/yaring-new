@@ -177,9 +177,17 @@ function statusLabel(status: string) {
   return BOOKING_STATUS_LABELS[status] ?? status;
 }
 
-function logout() {
+async function logout() {
+  try {
+    if (auth.user && auth.refreshToken) {
+      await request('/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify({ userId: auth.user.id, refreshToken: auth.refreshToken }),
+      });
+    }
+  } catch { /* proceed with local logout regardless */ }
   auth.logout();
-  navigateTo('/');
+  await navigateTo('/');
 }
 
 async function payBooking(booking: Booking) {

@@ -48,11 +48,11 @@ async function submit() {
   loading.value = true;
   error.value = null;
   try {
-    const data = await request<{ accessToken: string; user: User }>('/auth/login', {
+    const data = await request<{ accessToken: string; refreshToken: string; user: User }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ phone: phone.value, password: password.value }),
     });
-    auth.setSession(data.accessToken, data.user);
+    auth.setSession(data.accessToken, data.user, data.refreshToken);
     const redirect = (route.query.redirect as string) || '/profile';
     await navigateTo(redirect);
   } catch (e) {
