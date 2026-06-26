@@ -1,5 +1,6 @@
 <template>
   <div class="page-content">
+    <Breadcrumb current="Правила" />
     <ContentPageView slug="rules" />
   </div>
 </template>

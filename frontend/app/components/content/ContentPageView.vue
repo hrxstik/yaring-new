@@ -1,11 +1,11 @@
 <template>
   <article v-if="page" class="content-page">
-    <h1>{{ page.title }}</h1>
+    <h1 v-if="!embedded">{{ page.title }}</h1>
     <div class="prose" v-html="safeBody" />
   </article>
-  <ContentPageSkeleton v-else-if="loading" />
+  <ContentPageSkeleton v-else-if="loading && !embedded" />
   <AppAlert
-    v-else
+    v-else-if="!embedded"
     :title="error ? 'Не удалось загрузить страницу' : 'Страница не найдена'"
     :message="error ?? 'Попробуйте обновить страницу или вернитесь позже.'"
   >
@@ -19,7 +19,7 @@
 import DOMPurify from 'isomorphic-dompurify';
 import type { ContentPage } from '~/types';
 
-const props = defineProps<{ slug: string }>();
+const props = defineProps<{ slug: string; embedded?: boolean }>();
 
 const { request, formatApiError } = useApi();
 
@@ -48,6 +48,10 @@ async function load() {
 
 <style scoped lang="scss">
 .content-page {
-  max-width: 800px;
+  max-width: 760px;
+
+  h1 {
+    margin-bottom: $space-5;
+  }
 }
 </style>

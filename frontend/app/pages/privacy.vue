@@ -1,5 +1,6 @@
 <template>
   <div class="page-content">
+    <Breadcrumb current="Политика конфиденциальности" />
     <ContentPageView slug="privacy" />
   </div>
 </template>
