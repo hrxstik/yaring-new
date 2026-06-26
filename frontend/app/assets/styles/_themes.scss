@@ -11,11 +11,12 @@
   --color-border: #{$light-border};
   --color-primary: #{$light-primary};
   --color-primary-contrast: #ffffff;
-  --color-overlay: rgba(15, 22, 18, 0.5);
-  --shadow-card: 0 4px 24px rgba(26, 46, 31, 0.08);
-  --shadow-header: 0 1px 0 #{$light-border};
-  --shadow-elevated: 0 12px 40px rgba(26, 46, 31, 0.12);
-  --color-section-alt: #eef2ef;
+  --color-primary-tint: rgba(61, 107, 79, 0.12);
+  --color-overlay: rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-overlay: 0 20px 60px rgba(0, 0, 0, 0.2);
+  --color-section-alt: #{$light-surface-elevated};
   --hero-image: url('/hero-forest-lake.png');
 }
 
@@ -29,10 +30,29 @@
   --color-border: #{$dark-border};
   --color-primary: #{$dark-primary};
   --color-primary-contrast: #{$dark-bg};
-  --color-overlay: rgba(0, 0, 0, 0.62);
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.35);
-  --shadow-header: 0 1px 0 #{$dark-border};
-  --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.45);
-  --color-section-alt: #1a2420;
+  --color-primary-tint: rgba(106, 171, 122, 0.16);
+  --color-overlay: rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-overlay: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --color-section-alt: #{$dark-surface-elevated};
   --hero-image: url('/hero-forest-lake.png');
+}
+
+// Статусные цвета — общие для светлой и тёмной темы
+:root {
+  --color-danger: #c0392b;
+  --status-confirmed-bg: rgba(61, 107, 79, 0.12);
+  --status-confirmed-text: #3d6b4f;
+  --status-pending-bg: rgba(180, 120, 0, 0.12);
+  --status-pending-text: #b47800;
+  --status-cancelled-bg: rgba(192, 57, 43, 0.1);
+  --status-cancelled-text: #c0392b;
+  --status-completed-bg: rgba(41, 128, 185, 0.1);
+  --status-completed-text: #2980b9;
+}
+
+[data-theme='dark'] {
+  --status-confirmed-bg: rgba(106, 171, 122, 0.16);
+  --status-confirmed-text: #6aab7a;
 }

@@ -111,18 +111,65 @@ $dark-primary: $accent-dark;
   align-items: center;
   justify-content: center;
   gap: $space-2;
-  padding: $space-3 $space-5;
-  border-radius: var(--radius-md);
+  padding: 0 $space-5;
+  border-radius: $radius-full;
+  font-family: inherit;
   font-size: var(--font-base);
   font-weight: 600;
   cursor: pointer;
   border: none;
+  white-space: nowrap;
   transition:
     background $transition,
     color $transition,
     border-color $transition,
+    box-shadow $transition,
+    filter $transition,
     opacity $transition,
-    transform $transition;
+    transform 120ms ease;
+}
+
+// Статусный бейдж-«таблетка»
+@mixin status-badge {
+  align-self: flex-start;
+  font-size: $font-size-xs;
+  font-weight: 600;
+  padding: $space-1 $space-3;
+  border-radius: $radius-full;
+  background: var(--color-surface-elevated);
+  color: var(--color-text-secondary);
+
+  &--confirmed {
+    background: var(--status-confirmed-bg);
+    color: var(--status-confirmed-text);
+  }
+  &--pending,
+  &--pending_payment {
+    background: var(--status-pending-bg);
+    color: var(--status-pending-text);
+  }
+  &--cancelled {
+    background: var(--status-cancelled-bg);
+    color: var(--status-cancelled-text);
+  }
+  &--completed {
+    background: var(--status-completed-bg);
+    color: var(--status-completed-text);
+  }
+}
+
+// Декоративная «фото»-заглушка (диагональная штриховка)
+@mixin photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-surface-elevated),
+    var(--color-surface-elevated) 11px,
+    var(--color-border) 11px,
+    var(--color-border) 12px
+  );
 }
 
 @mixin focus-ring {
@@ -170,24 +217,30 @@ $dark-primary: $accent-dark;
 
 @mixin admin-status {
   font-size: $font-size-xs;
+  font-weight: 600;
   padding: $space-1 $space-2;
   border-radius: $radius-full;
   background: var(--color-surface-elevated);
   color: var(--color-text-secondary);
 
   &--confirmed {
-    background: rgba(61, 107, 79, 0.12);
-    color: var(--color-primary);
+    background: var(--status-confirmed-bg);
+    color: var(--status-confirmed-text);
+  }
+
+  &--pending_payment {
+    background: var(--status-pending-bg);
+    color: var(--status-pending-text);
   }
 
   &--cancelled {
-    background: rgba(192, 57, 43, 0.1);
-    color: #c0392b;
+    background: var(--status-cancelled-bg);
+    color: var(--status-cancelled-text);
   }
 
   &--completed {
-    background: rgba(41, 128, 185, 0.1);
-    color: #2980b9;
+    background: var(--status-completed-bg);
+    color: var(--status-completed-text);
   }
 }
 

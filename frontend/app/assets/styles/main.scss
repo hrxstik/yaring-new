@@ -37,7 +37,7 @@ h2,
 h3,
 h4 {
   margin: 0 0 $space-4;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.02em;
 }
@@ -52,10 +52,12 @@ h2 {
 
 h3 {
   font-size: var(--font-xl);
+  font-weight: 700;
 }
 
 h4 {
   font-size: var(--font-lg);
+  font-weight: 700;
 }
 
 p {
@@ -93,21 +95,71 @@ img {
 
 .prose {
   font-size: var(--font-base);
-  line-height: 1.65;
+  line-height: 1.6;
   color: var(--color-text-secondary);
 
+  > * {
+    margin: 0 0 $space-4;
+  }
+
   h2 {
-    margin-top: var(--space-section);
+    margin: $space-3 0 0;
     color: var(--color-text);
     font-size: var(--font-xl);
+    font-weight: 700;
   }
 
   ul {
     padding-left: $space-5;
-    margin-bottom: $space-4;
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
   }
 
   li {
-    margin-bottom: $space-2;
+    margin: 0;
+  }
+}
+
+// --- Глобальные анимации ---
+@keyframes yar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes yar-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes yar-slideup {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes yar-slidein-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes yar-fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
