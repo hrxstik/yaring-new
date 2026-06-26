@@ -1,9 +1,17 @@
 <template>
-  <div class="page-content auth-page">
-    <div class="auth-page__card">
-      <h1>{{ step === 'register' ? 'Регистрация' : 'Подтверждение телефона' }}</h1>
+  <div class="auth">
+    <div class="auth__card">
+      <div class="auth__head auth__head--start">
+        <div class="auth__steps">
+          <span class="auth__step-dot auth__step-dot--active" />
+          <span class="auth__step-dot" :class="{ 'auth__step-dot--active': step === 'verify' }" />
+          <span class="auth__step-label">Шаг {{ step === 'register' ? 1 : 2 }} из 2</span>
+        </div>
+        <h1 class="auth__title">{{ step === 'register' ? 'Регистрация' : 'Подтверждение' }}</h1>
+        <p v-if="step === 'verify'" class="auth__hint">Код отправлен на {{ phone }}</p>
+      </div>
 
-      <form v-if="step === 'register'" class="auth-page__form" @submit.prevent="register">
+      <form v-if="step === 'register'" class="auth__form" @submit.prevent="register">
         <AppInput v-model="name" label="Имя" autocomplete="name" />
         <AppInput
           v-model="phone"
@@ -18,22 +26,21 @@
           type="password"
           autocomplete="new-password"
         />
-        <AppAlert v-if="error" :message="error" />
-        <AppButton type="submit" block :loading="loading">Зарегистрироваться</AppButton>
+        <AppAlert v-if="error" variant="error" :message="error" />
+        <AppButton type="submit" size="lg" block :loading="loading">Далее</AppButton>
       </form>
 
-      <form v-else class="auth-page__form" @submit.prevent="verify">
-        <p class="auth-page__hint">Код отправлен на {{ phone }}</p>
+      <form v-else class="auth__form" @submit.prevent="verify">
         <AppInput v-model="code" label="Код из SMS" maxlength="6" />
-        <AppAlert v-if="error" :message="error" />
+        <AppAlert v-if="error" variant="error" :message="error" />
         <AppAlert v-if="resendMessage" variant="success" :message="resendMessage" />
-        <AppButton type="submit" block :loading="loading">Подтвердить</AppButton>
+        <AppButton type="submit" size="lg" block :loading="loading">Подтвердить</AppButton>
         <AppButton type="button" variant="ghost" block @click="resend">
           Отправить код повторно
         </AppButton>
       </form>
 
-      <p class="auth-page__footer">
+      <p class="auth__footer">
         Уже есть аккаунт?
         <NuxtLink to="/login">Войти</NuxtLink>
       </p>
@@ -115,43 +122,5 @@ async function resend() {
 </script>
 
 <style scoped lang="scss">
-.auth-page {
-  min-height: calc(100vh - var(--header-height) - 220px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-block: $space-10;
-
-  &__card {
-    @include card;
-    width: 100%;
-    max-width: 420px;
-  }
-
-  &__form {
-    display: flex;
-    flex-direction: column;
-    gap: $space-4;
-    margin-top: $space-5;
-  }
-
-  &__hint {
-    font-size: $font-size-sm;
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
-
-  &__error {
-    color: #c0392b;
-    font-size: $font-size-sm;
-    margin: 0;
-  }
-
-  &__footer {
-    margin-top: $space-5;
-    text-align: center;
-    font-size: $font-size-sm;
-    color: var(--color-text-secondary);
-  }
-}
+@use 'auth' as *;
 </style>

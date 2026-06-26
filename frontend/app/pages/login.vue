@@ -1,8 +1,13 @@
 <template>
-  <div class="page-content auth-page">
-    <div class="auth-page__card">
-      <h1>Вход</h1>
-      <form class="auth-page__form" @submit.prevent="submit">
+  <div class="auth">
+    <div class="auth__card">
+      <div class="auth__head">
+        <span class="auth__logo"><Trees :size="26" /></span>
+        <h1 class="auth__title">Вход</h1>
+        <p class="auth__subtitle">Рады видеть вас снова в «Яринг»</p>
+      </div>
+
+      <form class="auth__form" @submit.prevent="submit">
         <AppInput
           v-model="phone"
           label="Телефон"
@@ -16,13 +21,12 @@
           type="password"
           autocomplete="current-password"
         />
-        <AppAlert v-if="error" :message="error" />
-        <AppButton type="submit" block :loading="loading">Войти</AppButton>
+        <NuxtLink to="/reset-password" class="auth__forgot">Забыли пароль?</NuxtLink>
+        <AppAlert v-if="error" variant="error" :message="error" />
+        <AppButton type="submit" size="lg" block :loading="loading">Войти</AppButton>
       </form>
-      <p class="auth-page__footer">
-        <NuxtLink to="/reset-password">Забыли пароль?</NuxtLink>
-      </p>
-      <p class="auth-page__footer">
+
+      <p class="auth__footer">
         Нет аккаунта?
         <NuxtLink to="/register">Зарегистрироваться</NuxtLink>
       </p>
@@ -31,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+import { Trees } from 'lucide-vue-next';
 import type { User } from '~/types';
 
 useHead({ title: 'Вход — Яринг' });
@@ -64,37 +69,5 @@ async function submit() {
 </script>
 
 <style scoped lang="scss">
-.auth-page {
-  min-height: calc(100vh - var(--header-height) - 220px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-block: $space-10;
-
-  &__card {
-    @include card;
-    width: 100%;
-    max-width: 420px;
-  }
-
-  &__form {
-    display: flex;
-    flex-direction: column;
-    gap: $space-4;
-    margin-top: $space-5;
-  }
-
-  &__error {
-    color: #c0392b;
-    font-size: $font-size-sm;
-    margin: 0;
-  }
-
-  &__footer {
-    margin-top: $space-5;
-    text-align: center;
-    font-size: $font-size-sm;
-    color: var(--color-text-secondary);
-  }
-}
+@use 'auth' as *;
 </style>

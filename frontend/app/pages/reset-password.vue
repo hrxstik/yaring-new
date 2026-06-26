@@ -1,9 +1,16 @@
 <template>
-  <div class="page-content auth-page">
-    <div class="auth-page__card">
-      <h1>{{ step === 'request' ? 'Сброс пароля' : 'Новый пароль' }}</h1>
+  <div class="auth">
+    <div class="auth__card">
+      <div class="auth__head auth__head--start">
+        <h1 class="auth__title">{{ step === 'request' ? 'Сброс пароля' : 'Новый пароль' }}</h1>
+        <p class="auth__hint">
+          {{ step === 'request'
+            ? 'Введите телефон — отправим код для сброса'
+            : `Код отправлен на ${phone}` }}
+        </p>
+      </div>
 
-      <form v-if="step === 'request'" class="auth-page__form" @submit.prevent="requestReset">
+      <form v-if="step === 'request'" class="auth__form" @submit.prevent="requestReset">
         <AppInput
           v-model="phone"
           label="Телефон"
@@ -11,12 +18,11 @@
           placeholder="+7 (999) 000-00-00"
           autocomplete="tel"
         />
-        <AppAlert v-if="error" :message="error" />
-        <AppButton type="submit" block :loading="loading">Отправить код</AppButton>
+        <AppAlert v-if="error" variant="error" :message="error" />
+        <AppButton type="submit" size="lg" block :loading="loading">Отправить код</AppButton>
       </form>
 
-      <form v-else class="auth-page__form" @submit.prevent="confirmReset">
-        <p class="auth-page__hint">Код отправлен на {{ phone }}</p>
+      <form v-else class="auth__form" @submit.prevent="confirmReset">
         <AppInput v-model="code" label="Код из SMS" maxlength="6" />
         <AppInput
           v-model="newPassword"
@@ -24,14 +30,14 @@
           type="password"
           autocomplete="new-password"
         />
-        <AppAlert v-if="error" :message="error" />
-        <AppButton type="submit" block :loading="loading">Сохранить пароль</AppButton>
+        <AppAlert v-if="error" variant="error" :message="error" />
+        <AppButton type="submit" size="lg" block :loading="loading">Сохранить пароль</AppButton>
         <AppButton type="button" variant="ghost" block @click="step = 'request'">
           Назад
         </AppButton>
       </form>
 
-      <p class="auth-page__footer">
+      <p class="auth__footer">
         Вспомнили пароль?
         <NuxtLink to="/login">Войти</NuxtLink>
       </p>
@@ -97,37 +103,5 @@ async function confirmReset() {
 </script>
 
 <style scoped lang="scss">
-.auth-page {
-  min-height: calc(100vh - var(--header-height) - 220px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-block: $space-10;
-
-  &__card {
-    @include card;
-    width: 100%;
-    max-width: 420px;
-  }
-
-  &__form {
-    display: flex;
-    flex-direction: column;
-    gap: $space-4;
-    margin-top: $space-5;
-  }
-
-  &__hint {
-    font-size: $font-size-sm;
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
-
-  &__footer {
-    margin-top: $space-5;
-    text-align: center;
-    font-size: $font-size-sm;
-    color: var(--color-text-secondary);
-  }
-}
+@use 'auth' as *;
 </style>
