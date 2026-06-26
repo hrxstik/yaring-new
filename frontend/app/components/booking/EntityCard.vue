@@ -14,7 +14,10 @@
           {{ item }}
         </li>
       </ul>
-      <p class="entity-card__price">{{ priceLabel }}</p>
+      <p class="entity-card__price">
+        <span class="entity-card__amount">{{ priceAmount }}</span>
+        <span class="entity-card__unit">{{ priceUnit }}</span>
+      </p>
       <AppButton block @click="$emit('book', entity)">Забронировать</AppButton>
     </div>
   </article>
@@ -51,12 +54,17 @@ const imageSrc = computed(() => {
   return placeholders[props.entity.slug] ?? null;
 });
 
-const priceLabel = computed(() => {
-  if (props.entity.bookingType === 'hourly') {
-    return `от ${(props.entity.pricePerHour ?? 0).toLocaleString('ru-RU')} ₽ / час`;
-  }
-  return `от ${props.entity.pricePerDay.toLocaleString('ru-RU')} ₽ / сутки`;
+const priceAmount = computed(() => {
+  const value =
+    props.entity.bookingType === 'hourly'
+      ? props.entity.pricePerHour ?? 0
+      : props.entity.pricePerDay;
+  return `${value.toLocaleString('ru-RU')} ₽`;
 });
+
+const priceUnit = computed(() =>
+  props.entity.bookingType === 'hourly' ? '/ час' : '/ сутки',
+);
 
 function amenityIcon(item: string) {
   const value = item.toLowerCase();
@@ -81,9 +89,10 @@ function amenityIcon(item: string) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0;
   box-shadow: var(--shadow-card);
-  transition: transform $transition, box-shadow $transition;
+  transition:
+    transform $transition,
+    box-shadow $transition;
 
   &:hover {
     transform: translateY(-4px);
@@ -111,7 +120,7 @@ function amenityIcon(item: string) {
   }
 
   &__body {
-    padding: $space-5;
+    padding: $space-4 + 2px;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -119,7 +128,7 @@ function amenityIcon(item: string) {
   }
 
   &__title {
-    font-size: var(--font-base);
+    font-size: var(--font-xl);
     font-weight: 700;
     margin: 0;
   }
@@ -130,7 +139,7 @@ function amenityIcon(item: string) {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: $space-2;
+    gap: $space-2 - 1px;
     flex: 1;
 
     li {
@@ -148,10 +157,21 @@ function amenityIcon(item: string) {
   }
 
   &__price {
-    font-size: var(--font-lg);
-    font-weight: 700;
+    display: flex;
+    align-items: baseline;
+    gap: $space-1;
+    margin: 0;
+  }
+
+  &__amount {
+    font-size: var(--font-xl);
+    font-weight: 800;
     color: var(--color-primary);
-    margin: auto 0 0;
+  }
+
+  &__unit {
+    font-size: $font-size-sm;
+    color: var(--color-text-muted);
   }
 }
 </style>

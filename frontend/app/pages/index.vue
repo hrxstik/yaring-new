@@ -1,45 +1,40 @@
 <template>
   <section class="hero">
-    <div class="hero__container">
-      <div class="hero__layout">
-        <div class="hero__copy">
-          <div class="hero__content">
-            <h1 class="hero__title">База отдыха «Яринг»</h1>
-            <p class="hero__subtitle">
-              Отдыхайте на природе в окружении леса и живописного озера вдали от городской суеты
-            </p>
-            <div class="hero__actions">
-              <AppButton @click="navigateTo('/booking')">Забронировать</AppButton>
-              <AppButton variant="secondary" @click="navigateTo('/booking')">
-                Смотреть объекты
-              </AppButton>
-            </div>
-          </div>
-
+    <div class="hero__inner">
+      <div class="hero__media" aria-hidden="true" />
+      <div class="hero__copy">
+        <h1 class="hero__title">База отдыха «Яринг»</h1>
+        <p class="hero__subtitle">
+          Отдыхайте на природе в окружении леса и живописного озера вдали от городской суеты.
+        </p>
+        <div class="hero__actions">
+          <AppButton size="lg" block @click="navigateTo('/booking')">Забронировать</AppButton>
+          <AppButton variant="secondary" size="lg" block @click="navigateTo('/booking')">
+            Смотреть объекты
+          </AppButton>
         </div>
-
-        <div class="hero__media" aria-hidden="true" />
       </div>
     </div>
   </section>
 
-  <section class="section-block section-block--alt features">
-    <div class="page-content">
-      <h2 class="section-block__title">Почему выбирают Яринг</h2>
-      <div class="features__stats" aria-label="Ключевые преимущества">
-        <article v-for="stat in stats" :key="stat.label" class="features__stat">
-          <span class="features__stat-icon">
-            <component :is="stat.icon" :size="34" :stroke-width="1.75" />
-          </span>
-          <strong>{{ stat.value }}</strong>
-          <span>{{ stat.label }}</span>
-        </article>
+  <section class="stats">
+    <div class="stats__inner">
+      <div v-for="stat in stats" :key="stat.label" class="stats__item">
+        <span class="stats__icon"><component :is="stat.icon" :size="28" /></span>
+        <div class="stats__text">
+          <span class="stats__value">{{ stat.value }}</span>
+          <span class="stats__label">{{ stat.label }}</span>
+        </div>
       </div>
-      <div class="features__grid">
-        <article v-for="item in features" :key="item.title" class="features__item">
-          <div class="features__icon-wrap">
-            <component :is="item.icon" :size="26" />
-          </div>
+    </div>
+  </section>
+
+  <section class="advantages">
+    <div class="page-content">
+      <h2 class="advantages__title">Почему «Яринг»</h2>
+      <div class="advantages__grid">
+        <article v-for="item in features" :key="item.title" class="advantages__card">
+          <span class="advantages__icon"><component :is="item.icon" :size="24" /></span>
           <h3>{{ item.title }}</h3>
           <p>{{ item.text }}</p>
         </article>
@@ -47,13 +42,11 @@
     </div>
   </section>
 
-  <section class="section-block entities-preview">
+  <section class="entities">
     <div class="page-content">
-      <h2 class="section-block__title">Объекты для бронирования</h2>
-
+      <h2 class="entities__title">Объекты для отдыха</h2>
       <EntityCardSkeleton v-if="entitiesLoading" :count="3" />
-
-      <div v-else class="entities-preview__grid">
+      <div v-else class="entities__grid">
         <EntityCard
           v-for="entity in featuredEntities"
           :key="entity.id"
@@ -82,28 +75,16 @@ const entities = ref<BookableEntity[]>([]);
 const entitiesLoading = ref(true);
 
 const stats = [
-  { icon: House, value: '3+', label: 'объектов для комфортного отдыха' },
-  { icon: CalendarCheck, value: '24/7', label: 'онлайн-бронирование без выходных' },
+  { icon: House, value: '3+', label: 'объектов для отдыха' },
+  { icon: CalendarCheck, value: '24/7', label: 'онлайн-бронирование' },
   { icon: Map, value: '15 га', label: 'благоустроенной территории' },
 ];
 
 const features = [
   { icon: Trees, title: 'Природа рядом', text: 'Лес, озеро и чистый воздух круглый год' },
-  {
-    icon: Shield,
-    title: 'Комфорт и уют',
-    text: 'Продуманные условия для отдыха и релаксации',
-  },
-  {
-    icon: Leaf,
-    title: 'Чистая территория',
-    text: 'Ухоженная территория и экологичный подход',
-  },
-  {
-    icon: Users,
-    title: 'Для компаний и семей',
-    text: 'Идеально для отдыха с семьей и друзьями',
-  },
+  { icon: Shield, title: 'Комфорт и уют', text: 'Продуманные условия для отдыха и релаксации' },
+  { icon: Leaf, title: 'Чистая территория', text: 'Ухоженная территория и экологичный подход' },
+  { icon: Users, title: 'Для компаний и семей', text: 'Идеально для отдыха с семьёй и друзьями' },
 ];
 
 const fallbackEntities: BookableEntity[] = [
@@ -168,242 +149,204 @@ async function loadEntities() {
 }
 
 function goBooking(entity: BookableEntity) {
-  navigateTo({
-    path: '/booking',
-    query: { entity: entity.slug },
-  });
+  navigateTo({ path: '/booking', query: { entity: entity.slug } });
 }
 </script>
 
 <style scoped lang="scss">
 .hero {
-  min-height: 460px;
-  background: var(--color-bg);
-
-  @include md {
-    min-height: 520px;
-  }
-
-  &__container {
+  &__inner {
     @include container;
-    position: relative;
-    min-height: inherit;
-    padding-block: var(--space-section);
-  }
-
-  &__layout {
-    position: relative;
-    min-height: inherit;
     display: grid;
+    gap: $space-5;
+    padding-block: $space-6;
     align-items: center;
-    overflow: hidden;
-    border-radius: var(--radius-xl);
 
-    @include md {
-      grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.05fr);
+    @include sm {
+      grid-template-columns: 1fr 1fr;
+      gap: $space-7;
+      padding-block: $space-8;
     }
-  }
-
-  &__copy {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: $space-6;
-    padding: $space-8 0;
 
     @include md {
-      min-height: 440px;
-      padding: $space-8 0 $space-8 $space-2;
+      gap: $space-9;
+      padding-block: $space-10;
     }
   }
 
   &__media {
-    display: none;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-lg);
+    background-image: var(--hero-image);
+    background-size: cover;
+    background-position: center;
 
-    @include md {
-      position: relative;
-      display: block;
-      align-self: stretch;
-      min-height: 440px;
-      background-image: var(--hero-image);
-      background-size: cover;
-      background-position: center right;
-      border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
-    }
-
-    &::before {
-      @include md {
-        content: '';
-        position: absolute;
-        inset: 0 auto 0 0;
-        width: 48%;
-        background: linear-gradient(
-          90deg,
-          var(--color-bg) 0%,
-          rgba(244, 247, 245, 0.94) 28%,
-          rgba(244, 247, 245, 0.62) 58%,
-          rgba(244, 247, 245, 0) 100%
-        );
-
-        [data-theme='dark'] & {
-          background: linear-gradient(
-            90deg,
-            var(--color-bg) 0%,
-            rgba(15, 22, 18, 0.94) 28%,
-            rgba(15, 22, 18, 0.62) 58%,
-            rgba(15, 22, 18, 0) 100%
-          );
-        }
-      }
+    @include sm {
+      order: 2;
+      aspect-ratio: 4 / 3;
+      border-radius: var(--radius-xl);
     }
   }
 
-  &__content {
-    max-width: 560px;
+  &__copy {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+
+    @include sm {
+      order: 1;
+      gap: $space-5;
+    }
   }
 
   &__title {
+    margin: 0;
     font-size: var(--font-hero);
     line-height: 1.05;
-    color: var(--color-text);
-    margin-bottom: $space-4;
-    font-weight: 800;
+    letter-spacing: -0.025em;
   }
 
   &__subtitle {
+    margin: 0;
     font-size: var(--font-lg);
+    line-height: 1.55;
     color: var(--color-text-secondary);
-    margin-bottom: $space-5;
-    line-height: 1.6;
-    max-width: 500px;
   }
 
   &__actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: $space-3;
-  }
 
-}
+    @include md {
+      flex-direction: row;
 
-.section-block--alt {
-  background: var(--color-section-alt);
-}
-
-.features {
-  &__stats {
-    display: grid;
-    gap: $space-4;
-    margin: 0 auto $space-8;
-    max-width: 1040px;
-
-    @include sm {
-      grid-template-columns: repeat(3, 1fr);
+      :deep(.btn) {
+        width: auto;
+      }
     }
   }
+}
 
-  &__stat {
-    min-height: 184px;
+.stats {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+
+  &__inner {
+    @include container;
     display: flex;
     flex-direction: column;
+    gap: $space-5;
+    padding-block: $space-6;
+
+    @include sm {
+      flex-direction: row;
+      padding-block: $space-8;
+      gap: $space-6;
+    }
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+
+    @include sm {
+      flex: 1;
+    }
+  }
+
+  &__icon {
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: $space-3;
-    padding: $space-6 $space-5;
+    width: 64px;
+    height: 64px;
+    flex: none;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__value {
+    font-size: var(--font-3xl);
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  &__label {
+    font-size: $font-size-sm;
+    opacity: 0.85;
+  }
+}
+
+.advantages {
+  &__title {
+    margin: 0 0 $space-5;
     text-align: center;
+    font-size: var(--font-2xl);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $space-4;
+
+    @include md {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    padding: $space-5;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-card);
+    border-radius: var(--radius-lg);
 
-    strong {
-      display: block;
-      font-size: clamp(28px, 3.2vw, 42px);
-      line-height: 1;
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      color: var(--color-text);
+    h3 {
+      margin: 0;
+      font-size: var(--font-base);
+      font-weight: 700;
     }
 
-    span:not(.features__stat-icon) {
-      max-width: 220px;
-      font-size: var(--font-base);
+    p {
+      margin: 0;
+      font-size: $font-size-sm;
       line-height: 1.45;
       color: var(--color-text-secondary);
     }
   }
 
-  &__stat-icon {
-    width: 72px;
-    height: 72px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-primary);
-    background:
-      linear-gradient(145deg, rgba(106, 171, 122, 0.2), rgba(61, 107, 79, 0.08)),
-      var(--color-surface-elevated);
-    border: 1px solid rgba(61, 107, 79, 0.16);
-    border-radius: 24px;
-  }
-
-  &__grid {
-    display: grid;
-    gap: $space-4;
-
-    @include sm {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    @include md {
-      grid-template-columns: repeat(4, 1fr);
-      gap: $space-5;
-    }
-  }
-
-  &__item {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: $space-6 $space-5;
-    text-align: center;
-
-    h3 {
-      font-size: var(--font-base);
-      font-weight: 700;
-      margin-bottom: $space-2;
-      color: var(--color-text);
-    }
-
-    p {
-      font-size: var(--font-sm);
-      color: var(--color-text-secondary);
-      margin: 0;
-      line-height: 1.55;
-    }
-  }
-
-  &__icon-wrap {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto $space-4;
+  &__icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md);
-    background: rgba(61, 107, 79, 0.1);
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    background: var(--color-primary-tint);
     color: var(--color-primary);
   }
 }
 
-.entities-preview {
+.entities {
+  padding-bottom: $space-8;
+
+  &__title {
+    margin: 0 0 $space-5;
+    font-size: var(--font-2xl);
+  }
+
   &__grid {
     display: grid;
     gap: $space-5;
-    max-width: 1120px;
-    margin: 0 auto;
 
     @include sm {
       grid-template-columns: repeat(2, 1fr);
