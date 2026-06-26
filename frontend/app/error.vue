@@ -1,17 +1,13 @@
 <template>
   <div class="error-page">
+    <span class="error-page__ghost" aria-hidden="true">{{ error?.statusCode ?? 500 }}</span>
     <div class="error-page__content">
-      <p class="error-page__code">{{ error?.statusCode ?? 500 }}</p>
-      <h1 class="error-page__title">
-        {{ statusMessage }}
-      </h1>
-      <p class="error-page__hint">
-        {{ statusHint }}
-      </p>
+      <h1 class="error-page__title">{{ statusMessage }}</h1>
+      <p class="error-page__hint">{{ statusHint }}</p>
       <div class="error-page__actions">
-        <AppButton @click="handleError">На главную</AppButton>
-        <AppButton variant="secondary" @click="clearError({ redirect: '/' })">
-          Попробовать ещё раз
+        <AppButton size="lg" @click="handleError">На главную</AppButton>
+        <AppButton variant="secondary" size="lg" @click="clearError({ redirect: '/' })">
+          Попробовать снова
         </AppButton>
       </div>
     </div>
@@ -31,7 +27,7 @@ const statusMessage = computed(() => {
 
 const statusHint = computed(() => {
   if (props.error?.statusCode === 404)
-    return 'Возможно, страница была перемещена или удалена.';
+    return 'Похоже, тропинка заблудилась в лесу. Вернёмся к началу?';
   if (props.error?.statusCode === 403)
     return 'У вас нет прав для просмотра этой страницы.';
   return 'Попробуйте обновить страницу или вернитесь позже.';
@@ -46,45 +42,56 @@ function handleError() {
 @use '~/assets/styles/shared' as *;
 
 .error-page {
+  position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   background: var(--color-bg);
-  padding: $space-8;
+  padding: $space-8 var(--space-page-x);
 
-  &__content {
-    text-align: center;
-    max-width: 480px;
-  }
-
-  &__code {
-    font-size: 96px;
+  &__ghost {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -58%);
+    font-size: clamp(180px, 38vw, 360px);
     font-weight: 800;
     line-height: 1;
     color: var(--color-primary);
-    opacity: 0.2;
-    margin: 0 0 $space-4;
-    letter-spacing: -0.05em;
+    opacity: 0.12;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  &__content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-4;
+    max-width: 400px;
+    text-align: center;
   }
 
   &__title {
-    font-size: $font-size-3xl;
-    font-weight: 700;
-    color: var(--color-text);
-    margin: 0 0 $space-3;
+    margin: 0;
+    font-size: var(--font-2xl);
+    font-weight: 800;
   }
 
   &__hint {
+    margin: 0;
+    font-size: var(--font-lg);
     color: var(--color-text-secondary);
-    margin: 0 0 $space-6;
   }
 
   &__actions {
     display: flex;
-    gap: $space-3;
-    justify-content: center;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: $space-3;
   }
 }
 </style>
