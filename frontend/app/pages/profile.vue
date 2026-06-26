@@ -1,13 +1,19 @@
 <template>
   <div class="page-content profile-page">
+    <nav class="breadcrumb">
+      <NuxtLink to="/">Главная</NuxtLink>
+      <ChevronRight :size="14" />
+      <span>Личный кабинет</span>
+    </nav>
+
     <div class="profile-page__header">
-      <div>
-        <h1>Личный кабинет</h1>
-        <p v-if="auth.user" class="profile-page__user">
-          {{ auth.user.name }} · {{ auth.user.phone }}
-        </p>
+      <div class="profile-page__id">
+        <h1>{{ auth.user?.name || 'Личный кабинет' }}</h1>
+        <span v-if="auth.user" class="profile-page__phone">{{ auth.user.phone }}</span>
       </div>
-      <AppButton variant="secondary" size="sm" @click="logout">Выйти</AppButton>
+      <AppButton variant="ghost" size="md" @click="logout">
+        <LogOut :size="16" />Выйти
+      </AppButton>
     </div>
 
     <AppAlert
@@ -15,25 +21,22 @@
       variant="success"
       message="Бронирование успешно оплачено!"
     />
+    <AppAlert v-if="actionError" variant="error" :message="actionError" />
 
-    <AppAlert v-if="actionError" :message="actionError" class="profile-page__action-error" />
-
-    <section class="profile-page__section">
-      <h2>Профиль</h2>
-      <form class="profile-page__edit-form" @submit.prevent="saveProfile">
+    <section class="card">
+      <h3 class="card__title">Профиль</h3>
+      <AppAlert v-if="profileSuccess" variant="success" title="Изменения сохранены" />
+      <AppAlert v-if="profileError" variant="error" :message="profileError" />
+      <form class="profile-page__edit" @submit.prevent="saveProfile">
         <AppInput v-model="editName" label="Имя" :disabled="savingProfile" />
-        <div class="profile-page__edit-actions">
-          <AppButton type="submit" size="sm" :loading="savingProfile">Сохранить</AppButton>
-        </div>
-        <AppAlert v-if="profileError" :message="profileError" />
-        <AppAlert v-if="profileSuccess" variant="success" message="Имя обновлено" />
+        <AppButton type="submit" :loading="savingProfile">Сохранить</AppButton>
       </form>
     </section>
 
-    <section class="profile-page__section">
-      <h2>Мои бронирования</h2>
+    <section class="card">
+      <h3 class="card__title">Мои бронирования</h3>
 
-      <div v-if="loading" class="profile-page__skeletons">
+      <div v-if="loading" class="profile-page__list">
         <div v-for="n in 2" :key="n" class="profile-page__skeleton-item">
           <AppSkeleton variant="title" width="40%" />
           <AppSkeleton width="60%" />
@@ -51,24 +54,28 @@
         </template>
       </AppAlert>
 
-      <p v-else-if="!bookings.length" class="profile-page__empty">
-        У вас пока нет бронирований.
-        <NuxtLink to="/booking">Забронировать</NuxtLink>
-      </p>
+      <div v-else-if="!bookings.length" class="empty">
+        <span class="empty__icon"><CalendarX :size="40" /></span>
+        <div class="empty__text">
+          <h4>Пока нет бронирований</h4>
+          <p>Выберите домик, баню или беседку и забронируйте отдых.</p>
+        </div>
+        <AppButton size="lg" @click="navigateTo('/booking')">Забронировать</AppButton>
+      </div>
+
       <div v-else class="profile-page__list">
         <article v-for="booking in bookings" :key="booking.id" class="booking-item">
-          <div>
-            <h3>{{ booking.entityName }}</h3>
-            <p class="booking-item__dates">
+          <div class="booking-item__info">
+            <span class="booking-item__name">{{ booking.entityName }}</span>
+            <span class="booking-item__dates">
               <template v-if="booking.bookingType === 'hourly'">
-                {{ formatDateRu(booking.startDate) }} ·
-                {{ booking.startTime }} — {{ booking.endTime }}
+                {{ formatDateRu(booking.startDate) }} · {{ booking.startTime }} — {{ booking.endTime }}
               </template>
               <template v-else>
                 {{ formatRange(booking.startDate, booking.endDate) }}
               </template>
-            </p>
-            <span class="booking-item__status" :class="`booking-item__status--${booking.status}`">
+            </span>
+            <span class="status-badge" :class="`status-badge--${booking.status}`">
               {{ statusLabel(booking.status) }}
             </span>
           </div>
@@ -98,6 +105,7 @@
 </template>
 
 <script setup lang="ts">
+import { ChevronRight, LogOut, CalendarX } from 'lucide-vue-next';
 import type { Booking } from '~/types';
 import { formatRange, formatDateRu, BOOKING_STATUS_LABELS } from '~/utils/calendar';
 
@@ -243,58 +251,78 @@ async function cancelBooking(id: string) {
 </script>
 
 <style scoped lang="scss">
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: $space-1 + 2px;
+  font-size: $font-size-sm;
+  color: var(--color-text-muted);
+  margin-bottom: $space-4;
+
+  a {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-primary);
+    }
+  }
+
+  span {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+}
+
 .profile-page {
+  max-width: 860px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+
   &__header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: flex-start;
     gap: $space-4;
-    margin-bottom: $space-6;
+
+    h1 {
+      margin: 0;
+      font-size: var(--font-2xl);
+    }
   }
 
-  &__user {
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
-
-  &__action-error {
-    margin-bottom: $space-4;
-  }
-
-  &__section {
-    @include card;
-    margin-bottom: $space-5;
-  }
-
-  &__edit-form {
+  &__id {
     display: flex;
     flex-direction: column;
-    gap: $space-4;
-    max-width: 380px;
-    margin-top: $space-4;
+    gap: 2px;
   }
 
-  &__edit-actions {
+  &__phone {
+    font-size: var(--font-sm);
+    color: var(--color-text-secondary);
+  }
+
+  &__edit {
     display: flex;
+    flex-direction: column;
     gap: $space-3;
-  }
 
-  &__empty {
-    color: var(--color-text-muted);
+    @include sm {
+      flex-direction: row;
+      align-items: flex-end;
+
+      :deep(.field) {
+        flex: 1;
+      }
+    }
   }
 
   &__list {
     display: flex;
     flex-direction: column;
-    gap: $space-4;
-    margin-top: $space-4;
-  }
-
-  &__skeletons {
-    display: flex;
-    flex-direction: column;
-    gap: $space-4;
-    margin-top: $space-4;
+    gap: $space-3;
   }
 
   &__skeleton-item {
@@ -307,54 +335,115 @@ async function cancelBooking(id: string) {
   }
 }
 
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: $space-5;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  &__title {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: 700;
+  }
+}
+
+.status-badge {
+  @include status-badge;
+}
+
 .booking-item {
   display: flex;
-  justify-content: space-between;
-  gap: $space-4;
+  flex-direction: column;
+  gap: $space-3;
   padding: $space-4;
   border: 1px solid var(--color-border);
-  border-radius: $radius-md;
+  border-radius: var(--radius-md);
 
-  h3 {
-    margin-bottom: $space-2;
-    font-size: $font-size-base;
+  @include sm {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2 - 1px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: var(--font-base);
+    font-weight: 700;
   }
 
   &__dates {
     font-size: $font-size-sm;
     color: var(--color-text-secondary);
-    margin: 0 0 $space-2;
-  }
-
-  &__status {
-    font-size: $font-size-xs;
-    padding: $space-1 $space-2;
-    background: var(--color-surface-elevated);
-    border-radius: $radius-full;
-    color: var(--color-text-secondary);
-
-    &--confirmed {
-      background: rgba(61, 107, 79, 0.12);
-      color: var(--color-primary);
-    }
-
-    &--cancelled {
-      background: rgba(192, 57, 43, 0.1);
-      color: #c0392b;
-    }
-
-    &--completed {
-      background: rgba(41, 128, 185, 0.1);
-      color: #2980b9;
-    }
   }
 
   &__side {
-    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-3;
+    padding-top: $space-3;
+    border-top: 1px solid var(--color-border);
+
+    strong {
+      font-size: var(--font-lg);
+      font-weight: 800;
+    }
+
+    @include sm {
+      flex-direction: column;
+      align-items: flex-end;
+      padding-top: 0;
+      border-top: none;
+    }
+  }
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-4;
+  padding: $space-6 $space-4;
+  text-align: center;
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    border-radius: var(--radius-xl);
+    background: var(--color-surface-elevated);
+    color: var(--color-text-muted);
+  }
+
+  &__text {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: $space-2;
+    gap: $space-1 + 2px;
+
+    h4 {
+      margin: 0;
+      font-size: var(--font-lg);
+      font-weight: 700;
+    }
+
+    p {
+      margin: 0;
+      max-width: 260px;
+      font-size: var(--font-sm);
+      color: var(--color-text-secondary);
+    }
   }
 }
 </style>
