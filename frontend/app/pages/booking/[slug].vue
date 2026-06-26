@@ -1,5 +1,5 @@
 <template>
-  <div class="page-content booking-page">
+  <div class="page-content entity-detail">
     <div v-if="entityLoading">
       <EntityCardSkeleton :count="1" />
     </div>
@@ -15,25 +15,42 @@
     </AppAlert>
 
     <template v-else-if="entity">
-      <div class="booking-page__entity">
-        <NuxtLink to="/booking" class="booking-page__back">← Все объекты</NuxtLink>
-        <h1>{{ entity.name }}</h1>
-        <p class="booking-page__desc">{{ entity.description }}</p>
+      <NuxtLink to="/booking" class="entity-detail__back">
+        <ArrowLeft :size="16" />Все объекты
+      </NuxtLink>
 
-        <ul v-if="entity.amenities.length" class="booking-page__amenities">
-          <li v-for="item in entity.amenities" :key="item">{{ item }}</li>
-        </ul>
+      <div class="entity-detail__layout">
+        <div class="entity-detail__media">
+          <img v-if="imageSrc" :src="imageSrc" :alt="entity.name" />
+          <span v-else class="entity-detail__placeholder">фото объекта</span>
+        </div>
 
-        <p class="booking-page__price">
-          <template v-if="entity.bookingType === 'hourly'">
-            от {{ (entity.pricePerHour ?? 0).toLocaleString('ru-RU') }} ₽ / час
-          </template>
-          <template v-else>
-            от {{ entity.pricePerDay.toLocaleString('ru-RU') }} ₽ / сутки
-          </template>
-        </p>
+        <div class="entity-detail__info">
+          <h1 class="entity-detail__title">{{ entity.name }}</h1>
 
-        <AppButton @click="openBooking">Выбрать даты</AppButton>
+          <div class="entity-detail__meta">
+            <span class="chip">
+              <component :is="typeIcon" :size="14" />{{ typeLabel }}
+            </span>
+            <span class="chip">
+              <Users :size="14" />до {{ entity.capacity }} чел.
+            </span>
+            <span class="chip chip--price">{{ priceLabel }}</span>
+          </div>
+
+          <p class="entity-detail__desc">{{ entity.description }}</p>
+
+          <div v-if="entity.amenities.length" class="entity-detail__amenities">
+            <span class="entity-detail__amenities-label">Удобства</span>
+            <div class="entity-detail__amenities-list">
+              <span v-for="item in entity.amenities" :key="item" class="amenity">
+                <component :is="amenityIcon(item)" :size="16" />{{ item }}
+              </span>
+            </div>
+          </div>
+
+          <AppButton size="lg" block @click="openBooking">Выбрать даты</AppButton>
+        </div>
       </div>
 
       <BookingCalendarDrawer
@@ -47,23 +64,28 @@
       <AppDrawer
         :open="confirmOpen"
         title="Подтверждение"
+        show-back
         @close="confirmOpen = false"
+        @back="confirmOpen = false"
       >
         <div class="booking-confirm">
-          <h3>{{ entity.name }}</h3>
-          <p>{{ summaryText }}</p>
-          <p class="booking-confirm__price">
-            Итого: <strong>{{ estimatedPrice.toLocaleString('ru-RU') }} ₽</strong>
-          </p>
-          <AppAlert v-if="bookingError" :message="bookingError" />
+          <h3 class="booking-confirm__name">{{ entity.name }}</h3>
+          <div class="booking-confirm__rows">
+            <span class="booking-confirm__row"><Calendar :size="16" />{{ dateLabel }}</span>
+            <span v-if="timeLabel" class="booking-confirm__row"><Clock :size="16" />{{ timeLabel }}</span>
+          </div>
+          <AppAlert variant="info" message="Бронь действует 15 минут до оплаты." />
+          <AppAlert v-if="bookingError" variant="error" :message="bookingError" />
+          <div class="booking-confirm__total">
+            <span>Итого</span>
+            <strong>{{ estimatedPrice.toLocaleString('ru-RU') }} ₽</strong>
+          </div>
         </div>
         <template #footer>
-          <div class="booking-confirm__actions">
-            <AppButton variant="secondary" @click="confirmOpen = false">Назад</AppButton>
-            <AppButton :loading="submitting" @click="submitBooking">
-              {{ auth.isLoggedIn ? 'Оплатить' : 'Войти и оплатить' }}
-            </AppButton>
-          </div>
+          <AppButton variant="secondary" block @click="confirmOpen = false">Назад</AppButton>
+          <AppButton block :loading="submitting" @click="submitBooking">
+            {{ auth.isLoggedIn ? 'Оплатить' : 'Войти и оплатить' }}
+          </AppButton>
         </template>
       </AppDrawer>
     </template>
@@ -71,6 +93,10 @@
 </template>
 
 <script setup lang="ts">
+import {
+  ArrowLeft, Calendar, Clock, Users, Flame, Waves, Sofa, Droplets,
+  BedDouble, Utensils, Wifi, Car, Lamp, TreePine, DoorOpen,
+} from 'lucide-vue-next';
 import type { BookableEntity, Availability, Booking } from '~/types';
 import { formatRange, formatTimeRange, localTodayIso, addDaysIso, daysBetweenIso } from '~/utils/calendar';
 
@@ -115,12 +141,43 @@ onMounted(async () => {
   }
 });
 
-const summaryText = computed(() => {
+const placeholders: Record<string, string> = {
+  'domik-u-ozera': '/entity-cottage.png',
+  banya: '/entity-sauna.png',
+  besedka: '/entity-gazebo.png',
+};
+
+const imageSrc = computed(() => {
+  if (!entity.value) return null;
+  const url = entity.value.imageUrl;
+  if (url && (url.startsWith('http') || url.startsWith('/'))) return url;
+  return placeholders[entity.value.slug] ?? null;
+});
+
+const typeLabel = computed(() =>
+  entity.value?.bookingType === 'hourly' ? 'Почасово' : 'Посуточно',
+);
+const typeIcon = computed(() => (entity.value?.bookingType === 'hourly' ? Clock : Calendar));
+
+const priceLabel = computed(() => {
   if (!entity.value) return '';
   if (entity.value.bookingType === 'hourly') {
-    return `${formatRange(selection.startDate, selection.startDate)} · ${formatTimeRange(selection.startTime, selection.endTime)}`;
+    return `${(entity.value.pricePerHour ?? 0).toLocaleString('ru-RU')} ₽ / час`;
+  }
+  return `${entity.value.pricePerDay.toLocaleString('ru-RU')} ₽ / сутки`;
+});
+
+const dateLabel = computed(() => {
+  if (!entity.value) return '';
+  if (entity.value.bookingType === 'hourly') {
+    return formatRange(selection.startDate, selection.startDate);
   }
   return formatRange(selection.startDate, selection.endDate);
+});
+
+const timeLabel = computed(() => {
+  if (entity.value?.bookingType !== 'hourly') return '';
+  return formatTimeRange(selection.startTime, selection.endTime);
 });
 
 const estimatedPrice = computed(() => {
@@ -134,6 +191,22 @@ const estimatedPrice = computed(() => {
   if (!selection.endDate) return e.pricePerDay;
   return daysBetweenIso(selection.startDate, selection.endDate) * e.pricePerDay;
 });
+
+function amenityIcon(item: string) {
+  const v = item.toLowerCase();
+  if (v.includes('парн') || v.includes('мангал') || v.includes('камин')) return Flame;
+  if (v.includes('купел') || v.includes('озер') || v.includes('вид')) return Waves;
+  if (v.includes('отдых') || v.includes('гостин') || v.includes('диван')) return Sofa;
+  if (v.includes('душ') || v.includes('вода')) return Droplets;
+  if (v.includes('спаль')) return BedDouble;
+  if (v.includes('кух')) return Utensils;
+  if (v.includes('wi-fi') || v.includes('wifi')) return Wifi;
+  if (v.includes('парков')) return Car;
+  if (v.includes('освещ')) return Lamp;
+  if (v.includes('террас') || v.includes('лес')) return TreePine;
+  if (v.includes('гост')) return Users;
+  return DoorOpen;
+}
 
 async function openBooking() {
   if (!auth.isLoggedIn) {
@@ -211,62 +284,187 @@ async function submitBooking() {
 </script>
 
 <style scoped lang="scss">
-.booking-page {
-  &__entity {
-    max-width: 640px;
-  }
-
+.entity-detail {
   &__back {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: $space-1 + 2px;
     margin-bottom: $space-4;
     font-size: $font-size-sm;
-    color: var(--color-text-muted);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-decoration: none;
 
     &:hover {
       color: var(--color-primary);
     }
   }
 
-  &__desc {
-    color: var(--color-text-secondary);
-    margin-bottom: $space-4;
-  }
+  &__layout {
+    display: grid;
+    gap: $space-5;
 
-  &__amenities {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 $space-4;
-    display: flex;
-    flex-wrap: wrap;
-    gap: $space-2;
-
-    li {
-      font-size: $font-size-sm;
-      padding: $space-1 $space-3;
-      background: var(--color-surface-elevated);
-      border-radius: $radius-full;
-      color: var(--color-text-secondary);
+    @include sm {
+      grid-template-columns: 1fr 1fr;
+      gap: $space-6;
+      align-items: start;
     }
   }
 
-  &__price {
-    font-size: $font-size-xl;
+  &__media {
+    @include photo-placeholder;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+
+    @include sm {
+      aspect-ratio: 4 / 3;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__placeholder {
+    font-family: monospace;
+    font-size: $font-size-xs;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    padding: $space-1 $space-3;
+    border-radius: $radius-full;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: var(--font-base);
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+  }
+
+  &__amenities {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__amenities-label {
+    font-size: $font-size-sm;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  &__amenities-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-2;
+  }
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: $space-1 + 2px;
+  padding: $space-1 + 2px $space-3;
+  border-radius: $radius-full;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-elevated);
+
+  svg {
     color: var(--color-primary);
-    margin-bottom: $space-5;
+  }
+
+  &--price {
+    color: var(--color-primary);
+    font-weight: 700;
+    background: var(--color-primary-tint);
+  }
+}
+
+.amenity {
+  display: flex;
+  align-items: center;
+  gap: $space-2 - 1px;
+  padding: $space-2 $space-3;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+
+  svg {
+    color: var(--color-primary);
+    flex: none;
   }
 }
 
 .booking-confirm {
-  &__price {
-    font-size: $font-size-lg;
-    margin-top: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  &__name {
+    margin: 0;
+    font-size: var(--font-xl);
   }
 
-  &__actions {
+  &__rows {
     display: flex;
-    justify-content: flex-end;
-    gap: $space-3;
+    flex-direction: column;
+    gap: $space-2 + 2px;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: $space-2 + 2px;
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+
+    svg {
+      color: var(--color-primary);
+      flex: none;
+    }
+  }
+
+  &__total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: $space-4;
+    border-top: 1px solid var(--color-border);
+
+    span {
+      font-size: $font-size-base;
+      color: var(--color-text-secondary);
+    }
+
+    strong {
+      font-size: var(--font-2xl);
+      font-weight: 800;
+      color: var(--color-primary);
+    }
   }
 }
 </style>
