@@ -97,23 +97,24 @@ function onSlotClick(slot: string) {
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: $space-2;
-
-    @include sm {
-      grid-template-columns: repeat(5, 1fr);
-    }
   }
 
   &__slot {
-    padding: $space-2;
+    height: 40px;
     border: 1px solid var(--color-border);
-    border-radius: $radius-sm;
+    border-radius: var(--radius-md);
     background: var(--color-surface);
     color: var(--color-text);
+    font-family: inherit;
     font-size: $font-size-sm;
+    font-weight: 600;
     cursor: pointer;
-    transition: all $transition;
+    transition:
+      background $transition,
+      border-color $transition,
+      color $transition;
 
     &:hover:not(:disabled) {
       border-color: var(--color-primary);
@@ -132,7 +133,7 @@ function onSlotClick(slot: string) {
     }
 
     &--mid {
-      background: var(--color-surface-elevated);
+      background: var(--color-primary-tint);
       border-color: var(--color-primary);
     }
   }

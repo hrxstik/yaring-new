@@ -83,20 +83,30 @@ function nextMonth() {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: $space-3;
+    margin-bottom: $space-4;
 
     button {
-      background: none;
-      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--color-border);
+      border-radius: $radius-full;
+      background: var(--color-surface);
       color: var(--color-text);
       cursor: pointer;
-      padding: $space-1;
-      display: flex;
+      transition: border-color $transition;
+
+      &:hover {
+        border-color: var(--color-primary);
+      }
     }
   }
 
   &__label {
-    font-weight: 500;
+    font-size: var(--font-base);
+    font-weight: 700;
     color: var(--color-text);
   }
 }

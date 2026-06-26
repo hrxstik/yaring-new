@@ -26,6 +26,7 @@ import {
   getDaysInMonth,
   getFirstDayOfWeek,
   toIsoDate,
+  localTodayIso,
 } from '~/utils/calendar';
 
 const props = defineProps<{
@@ -41,6 +42,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ pick: [iso: string] }>();
 
+const today = localTodayIso();
 const daysInMonth = computed(() => getDaysInMonth(props.year, props.month));
 const firstDayOffset = computed(() => getFirstDayOfWeek(props.year, props.month));
 
@@ -67,6 +69,7 @@ function dayClasses(day: number) {
     'calendar-month__day--mid': isMid,
     'calendar-month__day--selected': isSelected,
     'calendar-month__day--blocked': isBlocked,
+    'calendar-month__day--today': iso === today,
   };
 }
 
@@ -91,15 +94,17 @@ function onDayClick(day: number) {
 
     span {
       text-align: center;
-      font-size: $font-size-sm;
+      font-size: $font-size-xs;
+      font-weight: 700;
       color: var(--color-text-muted);
+      padding: $space-1 0;
     }
   }
 
   &__grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: $space-1 0;
+    gap: 6px 0;
   }
 
   &__day {
@@ -122,7 +127,7 @@ function onDayClick(day: number) {
       position: absolute;
       top: 0;
       height: 36px;
-      background: var(--color-surface-elevated);
+      background: var(--color-primary-tint);
     }
 
     &--mid::before {
@@ -160,11 +165,17 @@ function onDayClick(day: number) {
     background: var(--color-surface-elevated);
   }
 
+  &__day--today &__day-inner {
+    box-shadow: inset 0 0 0 1px var(--color-primary);
+    color: var(--color-primary);
+  }
+
   &__day--start &__day-inner,
   &__day--end &__day-inner,
   &__day--selected &__day-inner {
     background: var(--color-primary);
     color: var(--color-primary-contrast);
+    box-shadow: none;
   }
 }
 </style>

@@ -16,8 +16,8 @@
       <DateRangeField
         v-if="bookingType === 'hourly'"
         label="Время"
+        icon="clock"
         :value="timeLabel"
-        class="booking-drawer__time-field"
         @click="panel = 'time'"
       />
     </template>
@@ -41,10 +41,8 @@
     />
 
     <template #footer>
-      <div class="booking-drawer__footer">
-        <AppButton variant="secondary" @click="$emit('close')">Отмена</AppButton>
-        <AppButton :disabled="!canApply" @click="apply">Применить</AppButton>
-      </div>
+      <AppButton variant="secondary" block @click="$emit('close')">Отмена</AppButton>
+      <AppButton block :disabled="!canApply" @click="apply">Применить</AppButton>
     </template>
   </AppDrawer>
 </template>
@@ -166,16 +164,3 @@ function apply() {
 }
 </script>
 
-<style scoped lang="scss">
-.booking-drawer {
-  &__time-field {
-    margin-top: $space-4;
-  }
-
-  &__footer {
-    display: flex;
-    gap: $space-3;
-    justify-content: flex-end;
-  }
-}
-</style>
