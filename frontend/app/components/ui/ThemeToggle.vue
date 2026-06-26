@@ -2,15 +2,11 @@
   <button
     type="button"
     class="theme-toggle"
-    aria-label="Переключить тему"
+    :aria-label="isDark ? 'Светлая тема' : 'Тёмная тема'"
     @click="toggle"
   >
-    <Sun
-      :class="['theme-toggle__icon', 'theme-toggle__icon--sun', { 'theme-toggle__icon--hidden': isDark }]"
-    />
-    <Moon
-      :class="['theme-toggle__icon', 'theme-toggle__icon--moon', { 'theme-toggle__icon--hidden': !isDark }]"
-    />
+    <Moon v-if="!isDark" :size="16" />
+    <Sun v-else :size="16" />
   </button>
 </template>
 
@@ -23,35 +19,23 @@ const isDark = computed(() => theme.value === 'dark');
 
 <style scoped lang="scss">
 .theme-toggle {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: $radius-full;
   background: transparent;
+  color: var(--color-text);
   cursor: pointer;
-  padding: 0;
+  transition:
+    border-color $transition,
+    color $transition;
 
-  &__icon {
-    position: absolute;
-    inset: 0;
-    margin: auto;
-    width: 20px;
-    height: 20px;
-    transition: transform $transition, opacity $transition;
-
-    &--sun {
-      color: #f59e0b;
-      fill: #f59e0b;
-    }
-
-    &--moon {
-      color: var(--color-text-secondary);
-    }
-
-    &--hidden {
-      opacity: 0;
-      transform: scale(0) rotate(90deg);
-    }
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 }
 </style>

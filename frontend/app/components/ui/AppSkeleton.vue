@@ -36,12 +36,12 @@ const style = computed(() => ({
 .skeleton {
   background: linear-gradient(
     90deg,
-    var(--color-surface-elevated) 0%,
-    var(--color-border) 50%,
-    var(--color-surface-elevated) 100%
+    var(--color-border),
+    var(--color-surface-elevated),
+    var(--color-border)
   );
   background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
+  animation: yar-shimmer 1.5s infinite;
 
   &--title {
     height: 2rem;
@@ -53,17 +53,8 @@ const style = computed(() => ({
   }
 
   &--button {
-    height: 44px;
+    height: 48px;
     border-radius: $radius-full;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
   }
 }
 </style>

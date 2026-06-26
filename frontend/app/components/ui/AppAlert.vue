@@ -1,9 +1,9 @@
 <template>
   <div class="alert" :class="`alert--${variant}`" role="alert">
-    <component :is="icon" :size="22" class="alert__icon" />
+    <component :is="icon" :size="20" class="alert__icon" />
     <div class="alert__body">
       <p v-if="title" class="alert__title">{{ title }}</p>
-      <p class="alert__message">
+      <p v-if="message || $slots.default" class="alert__message">
         <slot>{{ message }}</slot>
       </p>
       <div v-if="$slots.actions" class="alert__actions">
@@ -39,25 +39,24 @@ const icon = computed(() => {
 <style scoped lang="scss">
 .alert {
   display: flex;
-  gap: $space-4;
-  padding: $space-4 $space-5;
-  border-radius: var(--radius-lg);
-  border: 1px solid transparent;
+  gap: $space-3;
+  padding: $space-3 + 2px;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-text-muted);
+  background: var(--color-surface-elevated);
 
   &--error {
-    background: rgba(192, 57, 43, 0.08);
-    border-color: rgba(192, 57, 43, 0.2);
-    color: #8b2e24;
+    border-left-color: var(--color-danger);
+    background: var(--status-cancelled-bg);
 
     .alert__icon {
-      color: #c0392b;
+      color: var(--color-danger);
     }
   }
 
   &--success {
-    background: rgba(61, 107, 79, 0.1);
-    border-color: rgba(61, 107, 79, 0.25);
-    color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    background: var(--color-primary-tint);
 
     .alert__icon {
       color: var(--color-primary);
@@ -65,44 +64,51 @@ const icon = computed(() => {
   }
 
   &--info {
-    background: rgba(61, 107, 79, 0.06);
-    border-color: var(--color-border);
-    color: var(--color-text-secondary);
+    border-left-color: var(--status-completed-text);
+    background: var(--status-completed-bg);
 
     .alert__icon {
-      color: var(--color-primary);
+      color: var(--status-completed-text);
     }
   }
 
   &--warning {
-    background: rgba(245, 158, 11, 0.1);
-    border-color: rgba(245, 158, 11, 0.25);
-    color: #92400e;
+    border-left-color: var(--status-pending-text);
+    background: var(--status-pending-bg);
 
     .alert__icon {
-      color: #d97706;
+      color: var(--status-pending-text);
     }
   }
 
   &__icon {
-    flex-shrink: 0;
-    margin-top: 2px;
+    flex: none;
+    margin-top: 1px;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
   }
 
   &__title {
+    margin: 0;
+    font-size: $font-size-sm;
     font-weight: 700;
-    margin: 0 0 $space-1;
-    font-size: var(--font-base);
+    color: var(--color-text);
   }
 
   &__message {
     margin: 0;
-    font-size: var(--font-sm);
-    line-height: 1.5;
+    font-size: $font-size-sm;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
   }
 
   &__actions {
-    margin-top: $space-3;
+    margin-top: $space-2;
     display: flex;
     flex-wrap: wrap;
     gap: $space-2;
