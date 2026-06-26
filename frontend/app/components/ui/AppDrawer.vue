@@ -10,20 +10,27 @@
         aria-modal="true"
         :aria-label="title"
       >
-        <header class="drawer__header">
+        <span class="drawer__grabber" aria-hidden="true" />
+        <header v-if="title || showBack" class="drawer__header">
           <button
             v-if="showBack"
             type="button"
-            class="drawer__back"
+            class="drawer__icon-btn"
             aria-label="Назад"
             @click="$emit('back')"
           >
-            <ChevronLeft :size="24" />
+            <ArrowLeft :size="18" />
+          </button>
+          <button
+            v-else
+            type="button"
+            class="drawer__icon-btn drawer__icon-btn--close"
+            aria-label="Закрыть"
+            @click="$emit('close')"
+          >
+            <X :size="17" />
           </button>
           <h2 class="drawer__title">{{ title }}</h2>
-          <button type="button" class="drawer__close" aria-label="Закрыть" @click="$emit('close')">
-            <X :size="28" />
-          </button>
         </header>
         <div class="drawer__body">
           <slot />
@@ -37,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronLeft, X } from 'lucide-vue-next';
+import { ArrowLeft, X } from 'lucide-vue-next';
 
 const FOCUSABLE = [
   'a[href]',
@@ -130,21 +137,50 @@ onUnmounted(() => {
     background: var(--color-overlay);
     border: none;
     cursor: pointer;
+    animation: yar-fadein 0.25s ease-out;
   }
 
   &__panel {
     position: absolute;
+    left: 0;
     right: 0;
-    top: 0;
-    height: 100%;
-    width: min(100%, 420px);
+    bottom: 0;
+    max-height: 85%;
     background: var(--color-surface);
-    border-left: 1px solid var(--color-border);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.22);
     display: flex;
     flex-direction: column;
+    animation: yar-slideup 0.25s ease-out;
+
+    @include md {
+      left: auto;
+      top: 0;
+      height: 100%;
+      max-height: none;
+      width: min(100%, 400px);
+      border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.2);
+      animation: yar-slidein-right 0.25s ease-out;
+    }
 
     &--wide {
-      width: min(100%, 520px);
+      @include md {
+        width: min(100%, 460px);
+      }
+    }
+  }
+
+  &__grabber {
+    flex: none;
+    width: 40px;
+    height: 4px;
+    margin: $space-1 + 2px auto 0;
+    border-radius: $radius-full;
+    background: var(--color-border);
+
+    @include md {
+      display: none;
     }
   }
 
@@ -152,37 +188,57 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: $space-3;
-    padding: $space-6 $space-5 $space-4;
+    padding: $space-3 + 2px $space-4 + 2px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  &__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border: none;
+    border-radius: $radius-full;
+    background: var(--color-surface-elevated);
+    color: var(--color-text);
+    cursor: pointer;
+
+    &--close {
+      display: none;
+
+      @include md {
+        display: flex;
+      }
+    }
+
+    &:hover {
+      color: var(--color-primary);
+    }
   }
 
   &__title {
     flex: 1;
-    font-size: $font-size-xl;
     margin: 0;
-  }
-
-  &__back,
-  &__close {
-    background: none;
-    border: none;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    padding: $space-1;
-    display: flex;
-
-    &:hover {
-      color: var(--color-text);
-    }
+    font-size: var(--font-lg);
+    font-weight: 700;
   }
 
   &__body {
     flex: 1;
     overflow-y: auto;
-    padding: 0 $space-5 $space-4;
+    padding: $space-4 + 2px;
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
   }
 
   &__footer {
-    padding: $space-4 $space-5 $space-6;
+    flex: none;
+    display: flex;
+    gap: $space-3;
+    padding: $space-4 $space-4 + 2px;
     border-top: 1px solid var(--color-border);
   }
 }
