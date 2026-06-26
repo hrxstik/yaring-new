@@ -155,7 +155,9 @@ services:
         NUXT_PUBLIC_API_URL: http://gateway:4000/api
     restart: unless-stopped
     environment:
-      NUXT_PUBLIC_API_URL: http://gateway:4000/api
+      # Browser (client-side) must reach the gateway via the host-published port,
+      # not the internal Docker DNS name. API calls run in onMounted (client only).
+      NUXT_PUBLIC_API_URL: http://localhost:4000/api
     ports:
       - "3000:3000"
     depends_on:
