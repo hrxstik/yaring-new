@@ -1,8 +1,13 @@
 <template>
   <div class="page-content booking-page">
-    <h1>Бронирование</h1>
+    <nav class="breadcrumb">
+      <NuxtLink to="/">Главная</NuxtLink>
+      <ChevronRight :size="14" />
+      <span>Бронирование</span>
+    </nav>
+    <h1 class="booking-page__title">Бронирование</h1>
     <p class="booking-page__hint">
-      Выберите объект и укажите даты. Бронирование доступно после входа в аккаунт.
+      Выберите объект, даты и время — оплата онлайн.
     </p>
 
     <EntityCardSkeleton v-if="loading" :count="3" />
@@ -41,29 +46,35 @@
     <AppDrawer
       :open="confirmOpen"
       title="Подтверждение"
+      show-back
       @close="confirmOpen = false"
+      @back="confirmOpen = false"
     >
       <div v-if="selectedEntity" class="booking-confirm">
-        <h3>{{ selectedEntity.name }}</h3>
-        <p>{{ summaryText }}</p>
-        <p class="booking-confirm__price">
-          Итого: <strong>{{ estimatedPrice.toLocaleString('ru-RU') }} ₽</strong>
-        </p>
-        <AppAlert v-if="error" :message="error" />
+        <h3 class="booking-confirm__name">{{ selectedEntity.name }}</h3>
+        <div class="booking-confirm__rows">
+          <span class="booking-confirm__row"><Calendar :size="16" />{{ dateLabel }}</span>
+          <span v-if="timeLabel" class="booking-confirm__row"><Clock :size="16" />{{ timeLabel }}</span>
+        </div>
+        <AppAlert variant="info" message="Бронь действует 15 минут до оплаты." />
+        <AppAlert v-if="error" variant="error" :message="error" />
+        <div class="booking-confirm__total">
+          <span>Итого</span>
+          <strong>{{ estimatedPrice.toLocaleString('ru-RU') }} ₽</strong>
+        </div>
       </div>
       <template #footer>
-        <div class="booking-confirm__actions">
-          <AppButton variant="secondary" @click="confirmOpen = false">Назад</AppButton>
-          <AppButton :loading="submitting" @click="submitBooking">
-            {{ auth.isLoggedIn ? 'Оплатить' : 'Войти и оплатить' }}
-          </AppButton>
-        </div>
+        <AppButton variant="secondary" block @click="confirmOpen = false">Назад</AppButton>
+        <AppButton block :loading="submitting" @click="submitBooking">
+          {{ auth.isLoggedIn ? 'Оплатить' : 'Войти и оплатить' }}
+        </AppButton>
       </template>
     </AppDrawer>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ChevronRight, Calendar, Clock } from 'lucide-vue-next';
 import type { BookableEntity, Availability, Booking } from '~/types';
 import { formatRange, formatTimeRange, localTodayIso, addDaysIso, daysBetweenIso } from '~/utils/calendar';
 
@@ -108,12 +119,17 @@ async function loadEntities() {
   await openEntityFromQuery();
 }
 
-const summaryText = computed(() => {
+const dateLabel = computed(() => {
   if (!selectedEntity.value) return '';
   if (selectedEntity.value.bookingType === 'hourly') {
-    return `${formatRange(selection.startDate, selection.startDate)} · ${formatTimeRange(selection.startTime, selection.endTime)}`;
+    return formatRange(selection.startDate, selection.startDate);
   }
   return formatRange(selection.startDate, selection.endDate);
+});
+
+const timeLabel = computed(() => {
+  if (selectedEntity.value?.bookingType !== 'hourly') return '';
+  return formatTimeRange(selection.startTime, selection.endTime);
 });
 
 const estimatedPrice = computed(() => {
@@ -250,7 +266,34 @@ async function submitBooking() {
 </script>
 
 <style scoped lang="scss">
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: $space-1 + 2px;
+  font-size: $font-size-sm;
+  color: var(--color-text-muted);
+  margin-bottom: $space-2;
+
+  a {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-primary);
+    }
+  }
+
+  span {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+}
+
 .booking-page {
+  &__title {
+    margin: 0 0 $space-1;
+  }
+
   &__hint {
     color: var(--color-text-secondary);
     margin-bottom: $space-6;
@@ -258,7 +301,7 @@ async function submitBooking() {
 
   &__grid {
     display: grid;
-    gap: $space-5;
+    gap: $space-4;
 
     @include sm {
       grid-template-columns: repeat(2, 1fr);
@@ -268,27 +311,54 @@ async function submitBooking() {
       grid-template-columns: repeat(3, 1fr);
     }
   }
-
-  &__loading {
-    color: var(--color-text-muted);
-  }
 }
 
 .booking-confirm {
-  &__price {
-    font-size: $font-size-lg;
-    margin-top: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
+  &__name {
+    margin: 0;
+    font-size: var(--font-xl);
   }
 
-  &__error {
-    color: #c0392b;
-    font-size: $font-size-sm;
-  }
-
-  &__actions {
+  &__rows {
     display: flex;
-    justify-content: flex-end;
-    gap: $space-3;
+    flex-direction: column;
+    gap: $space-2 + 2px;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: $space-2 + 2px;
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+
+    svg {
+      color: var(--color-primary);
+      flex: none;
+    }
+  }
+
+  &__total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: $space-4;
+    border-top: 1px solid var(--color-border);
+
+    span {
+      font-size: $font-size-base;
+      color: var(--color-text-secondary);
+    }
+
+    strong {
+      font-size: var(--font-2xl);
+      font-weight: 800;
+      color: var(--color-primary);
+    }
   }
 }
 </style>
