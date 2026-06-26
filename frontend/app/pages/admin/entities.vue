@@ -1,87 +1,86 @@
 <template>
   <div class="admin-entities">
     <div class="admin-entities__header">
-      <h1>Объекты (CMS)</h1>
-      <AppButton size="sm" @click="openCreate">Добавить</AppButton>
+      <h2 class="admin-entities__title">Объекты</h2>
+      <AppButton size="md" @click="openCreate"><Plus :size="16" />Добавить объект</AppButton>
     </div>
 
-    <AppAlert v-if="removeError" :message="removeError" class="admin-entities__error" />
+    <AppAlert v-if="removeError" variant="error" :message="removeError" />
 
     <div v-if="loading" class="admin-skeleton">
-      <AppSkeleton v-for="n in 5" :key="n" height="48px" />
+      <AppSkeleton v-for="n in 4" :key="n" height="68px" />
     </div>
 
-    <table v-else class="admin-table">
-      <thead>
-        <tr>
-          <th>Название</th>
-          <th>Тип</th>
-          <th>Цена</th>
-          <th>Статус</th>
-          <th />
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="entity in entities" :key="entity.id">
-          <td>{{ entity.name }}</td>
-          <td>{{ entity.bookingType === 'daily' ? 'Посуточно' : 'Почасово' }}</td>
-          <td>
-            {{
-              entity.bookingType === 'hourly'
-                ? `${entity.pricePerHour} ₽/ч`
-                : `${entity.pricePerDay} ₽/сут`
-            }}
-          </td>
-          <td>{{ entity.isActive ? 'Активен' : 'Скрыт' }}</td>
-          <td class="admin-table__actions">
-            <AppButton size="sm" variant="ghost" @click="openEdit(entity)">Изменить</AppButton>
-            <AppButton size="sm" variant="danger" @click="remove(entity.id)">Удалить</AppButton>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-else class="admin-entities__list">
+      <article v-for="entity in entities" :key="entity.id" class="entity-row">
+        <span class="entity-row__thumb" aria-hidden="true" />
+        <div class="entity-row__info">
+          <span class="entity-row__name">{{ entity.name }}</span>
+          <span class="entity-row__meta">
+            {{ entity.bookingType === 'daily' ? 'Посуточно' : 'Почасово' }} ·
+            {{ priceLabel(entity) }} · до {{ entity.capacity }} чел.
+          </span>
+        </div>
+        <span class="status-badge" :class="entity.isActive ? 'status-badge--confirmed' : 'status-badge--cancelled'">
+          {{ entity.isActive ? 'Активен' : 'Скрыт' }}
+        </span>
+        <button type="button" class="icon-btn" aria-label="Изменить" @click="openEdit(entity)">
+          <Pencil :size="16" />
+        </button>
+        <button type="button" class="icon-btn icon-btn--danger" aria-label="Удалить" @click="remove(entity.id)">
+          <Trash2 :size="16" />
+        </button>
+      </article>
+    </div>
 
     <AppDrawer
       :open="drawerOpen"
-      :title="editingId ? 'Редактирование' : 'Новый объект'"
+      :title="editingId ? 'Редактировать объект' : 'Новый объект'"
+      wide
       @close="drawerOpen = false"
     >
-      <form class="entity-form" @submit.prevent="save">
+      <form id="entity-form" class="entity-form" @submit.prevent="save">
         <AppInput v-model="form.name" label="Название" />
         <AppInput v-model="form.slug" label="Slug" />
         <AppInput v-model="form.imageUrl" label="URL изображения" placeholder="/entity-cottage.png" />
-        <label class="entity-form__field">
-          <span>Описание</span>
-          <textarea v-model="form.description" rows="4" />
+        <label class="field">
+          <span class="field__label">Описание</span>
+          <textarea v-model="form.description" rows="4" class="field__control" />
         </label>
-        <label class="entity-form__field">
-          <span>Тип бронирования</span>
-          <select v-model="form.bookingType">
+        <label class="field">
+          <span class="field__label">Тип бронирования</span>
+          <select v-model="form.bookingType" class="field__control">
             <option value="daily">Посуточно</option>
             <option value="hourly">Почасово</option>
           </select>
         </label>
-        <AppInput v-model.number="form.pricePerDay" label="Цена за сутки" type="number" />
-        <AppInput
-          v-if="form.bookingType === 'hourly'"
-          v-model.number="form.pricePerHour"
-          label="Цена за час"
-          type="number"
-        />
-        <AppInput v-model.number="form.capacity" label="Вместимость" type="number" />
+        <div class="entity-form__row">
+          <AppInput v-model.number="form.pricePerDay" label="Цена за сутки" type="number" />
+          <AppInput
+            v-if="form.bookingType === 'hourly'"
+            v-model.number="form.pricePerHour"
+            label="Цена за час"
+            type="number"
+          />
+          <AppInput v-model.number="form.capacity" label="Вместимость" type="number" />
+        </div>
         <AppInput v-model="amenitiesText" label="Удобства (через запятую)" />
-        <label class="entity-form__checkbox">
+        <label class="checkbox">
           <input v-model="form.isActive" type="checkbox" />
+          <span class="checkbox__box"><Check :size="14" /></span>
           Активен
         </label>
-        <p v-if="error" class="entity-form__error">{{ error }}</p>
-        <AppButton type="submit" block :loading="saving">Сохранить</AppButton>
+        <AppAlert v-if="error" variant="error" :message="error" />
       </form>
+      <template #footer>
+        <AppButton type="submit" form="entity-form" block :loading="saving">Сохранить</AppButton>
+      </template>
     </AppDrawer>
   </div>
 </template>
 
 <script setup lang="ts">
+import { Plus, Pencil, Trash2, Check } from 'lucide-vue-next';
 import type { BookableEntity, BookingType } from '~/types';
 
 definePageMeta({ layout: 'admin', middleware: 'admin' });
@@ -109,6 +108,12 @@ const form = reactive({
 });
 
 const amenitiesText = ref('');
+
+function priceLabel(entity: BookableEntity) {
+  return entity.bookingType === 'hourly'
+    ? `${(entity.pricePerHour ?? 0).toLocaleString('ru-RU')} ₽/ч`
+    : `${entity.pricePerDay.toLocaleString('ru-RU')} ₽/сут`;
+}
 
 onMounted(load);
 
@@ -153,6 +158,7 @@ function openEdit(entity: BookableEntity) {
   form.capacity = entity.capacity;
   form.isActive = entity.isActive;
   amenitiesText.value = entity.amenities.join(', ');
+  error.value = null;
   drawerOpen.value = true;
 }
 
@@ -202,54 +208,182 @@ async function remove(id: string) {
 
 <style scoped lang="scss">
 .admin-entities {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+
   &__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: $space-4;
+    gap: $space-3;
   }
 
-  &__error {
-    margin-bottom: $space-4;
+  &__title {
+    margin: 0;
+    font-size: var(--font-2xl);
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2 + 2px;
   }
 }
 
-.admin-table {
-  @include admin-table;
+.entity-row {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+
+  &__thumb {
+    @include photo-placeholder;
+    width: 52px;
+    height: 52px;
+    flex: none;
+    border-radius: var(--radius-md);
+
+    @media (max-width: 480px) {
+      display: none;
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: var(--font-base);
+    font-weight: 700;
+  }
+
+  &__meta {
+    font-size: $font-size-sm;
+    color: var(--color-text-muted);
+  }
+}
+
+.status-badge {
+  @include status-badge;
+  flex: none;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    border-color $transition,
+    color $transition;
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  &--danger {
+    color: var(--color-danger);
+
+    &:hover {
+      border-color: var(--color-danger);
+      color: var(--color-danger);
+    }
+  }
 }
 
 .entity-form {
   display: flex;
   flex-direction: column;
-  gap: $space-4;
+  gap: $space-3 + 2px;
 
-  &__field {
+  &__row {
     display: flex;
-    flex-direction: column;
-    gap: $space-2;
-    font-size: $font-size-sm;
-    color: var(--color-text-secondary);
+    gap: $space-3;
 
-    textarea,
-    select {
-      padding: $space-3;
-      border: 1px solid var(--color-border);
-      border-radius: $radius-md;
-      background: var(--color-surface);
-      color: var(--color-text);
+    > * {
+      flex: 1;
     }
   }
+}
 
-  &__checkbox {
-    display: flex;
-    align-items: center;
-    gap: $space-2;
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1 + 2px;
+
+  &__label {
     font-size: $font-size-sm;
+    font-weight: 500;
+    color: var(--color-text-secondary);
   }
 
-  &__error {
-    color: #c0392b;
-    font-size: $font-size-sm;
+  &__control {
+    padding: $space-2 + 2px $space-3 + 2px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: $font-size-base;
+    outline: none;
+    resize: vertical;
+
+    &:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-tint);
+    }
+  }
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: $space-2 + 2px;
+  font-size: var(--font-base);
+  font-weight: 500;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &__box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    color: transparent;
+    transition:
+      background $transition,
+      border-color $transition,
+      color $transition;
+  }
+
+  input:checked + &__box {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-contrast);
   }
 }
 </style>

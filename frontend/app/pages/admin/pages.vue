@@ -1,28 +1,31 @@
 <template>
-  <div>
-    <h1>Страницы сайта</h1>
-    <div class="pages-admin">
-      <nav class="pages-admin__nav">
-        <button
-          v-for="slug in pageSlugs"
-          :key="slug"
-          type="button"
-          :class="{ 'pages-admin__nav-item--active': slug === activeSlug }"
-          @click="selectPage(slug)"
-        >
-          {{ slugLabels[slug] }}
-        </button>
-      </nav>
-      <form v-if="page" class="pages-admin__form" @submit.prevent="save">
-        <AppInput v-model="page.title" label="Заголовок" />
-        <label class="pages-admin__field">
-          <span>Содержимое (HTML)</span>
-          <textarea v-model="page.body" rows="16" />
-        </label>
-        <p v-if="message" class="pages-admin__message">{{ message }}</p>
+  <div class="admin-pages">
+    <h2 class="admin-pages__title">Страницы</h2>
+
+    <nav class="admin-pages__tabs">
+      <button
+        v-for="slug in pageSlugs"
+        :key="slug"
+        type="button"
+        class="admin-pages__tab"
+        :class="{ 'admin-pages__tab--active': slug === activeSlug }"
+        @click="selectPage(slug)"
+      >
+        {{ slugLabels[slug] }}
+      </button>
+    </nav>
+
+    <form v-if="page" class="admin-pages__form" @submit.prevent="save">
+      <AppInput v-model="page.title" label="Заголовок" />
+      <label class="field">
+        <span class="field__label">HTML-содержимое</span>
+        <textarea v-model="page.body" rows="14" class="field__code" />
+      </label>
+      <AppAlert v-if="message" :variant="message === 'Сохранено' ? 'success' : 'error'" :message="message" />
+      <div class="admin-pages__actions">
         <AppButton type="submit" :loading="saving">Сохранить</AppButton>
-      </form>
-    </div>
+      </div>
+    </form>
   </div>
 </template>
 
@@ -76,65 +79,80 @@ async function save() {
 </script>
 
 <style scoped lang="scss">
-.pages-admin {
-  display: grid;
-  gap: $space-6;
-  margin-top: $space-6;
+.admin-pages {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
 
-  @include md {
-    grid-template-columns: 200px 1fr;
+  &__title {
+    margin: 0;
+    font-size: var(--font-2xl);
   }
 
-  &__nav {
+  &__tabs {
     display: flex;
-    flex-direction: column;
     gap: $space-2;
+    flex-wrap: wrap;
   }
 
-  &__nav-item--active,
-  button {
-    padding: $space-3 $space-4;
-    border: 1px solid var(--color-border);
-    border-radius: $radius-md;
-    background: var(--color-surface);
-    color: var(--color-text);
-    cursor: pointer;
-    text-align: left;
-  }
-
-  &__nav-item--active {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-  }
-
-  &__form {
-    @include card;
-    display: flex;
-    flex-direction: column;
-    gap: $space-4;
-  }
-
-  &__field {
-    display: flex;
-    flex-direction: column;
-    gap: $space-2;
-    font-size: $font-size-sm;
+  &__tab {
+    padding: $space-2 - 1px $space-4;
+    border: none;
+    border-radius: $radius-full;
+    background: transparent;
     color: var(--color-text-secondary);
+    font-family: inherit;
+    font-size: $font-size-sm;
+    font-weight: 500;
+    cursor: pointer;
 
-    textarea {
-      padding: $space-3;
-      border: 1px solid var(--color-border);
-      border-radius: $radius-md;
-      background: var(--color-surface);
-      color: var(--color-text);
-      font-family: monospace;
-      font-size: $font-size-sm;
+    &--active {
+      background: var(--color-primary);
+      color: var(--color-primary-contrast);
+      font-weight: 600;
     }
   }
 
-  &__message {
-    color: var(--color-primary);
-    margin: 0;
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
+    max-width: 760px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $space-3;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1 + 2px;
+
+  &__label {
+    font-size: $font-size-sm;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+  }
+
+  &__code {
+    padding: $space-3 $space-3 + 2px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-elevated);
+    color: var(--color-text);
+    font-family: monospace;
+    font-size: $font-size-sm;
+    line-height: 1.5;
+    outline: none;
+    resize: vertical;
+
+    &:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-tint);
+    }
   }
 }
 </style>
