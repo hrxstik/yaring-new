@@ -2,67 +2,98 @@
   <header class="header">
     <div class="header__inner">
       <NuxtLink to="/" class="header__logo" @click="menuOpen = false">
-        <Trees :size="26" />
-        <span>Яринг</span>
+        <span class="header__logo-mark"><Trees :size="19" /></span>
+        <span class="header__logo-text">Яринг</span>
       </NuxtLink>
 
-      <nav class="header__nav" :class="{ 'header__nav--open': menuOpen }">
+      <nav class="header__nav">
         <NuxtLink
           v-for="link in navLinks"
           :key="link.to"
           :to="link.to"
           class="header__link"
-          @click="menuOpen = false"
         >
           {{ link.label }}
         </NuxtLink>
-        <div class="header__nav-mobile">
-          <ThemeToggle />
-          <NuxtLink v-if="auth.isAdmin" to="/admin" class="header__link" @click="menuOpen = false">
-            Админка
-          </NuxtLink>
-          <NuxtLink v-if="!auth.isLoggedIn" to="/login" @click="menuOpen = false">
-            <AppButton block>Войти</AppButton>
-          </NuxtLink>
-        </div>
       </nav>
 
       <div class="header__actions">
-        <ThemeToggle class="header__theme" />
-        <NuxtLink v-if="auth.isAdmin" to="/admin" class="header__link header__link--admin">
-          Админ
+        <ThemeToggle />
+        <NuxtLink v-if="auth.isAdmin" to="/admin">
+          <AppButton variant="ghost" size="md">Админка</AppButton>
         </NuxtLink>
-        <NuxtLink
-          v-if="auth.isLoggedIn"
-          to="/profile"
-          class="header__profile"
-          aria-label="Личный кабинет"
-        >
-          <User :size="20" />
+        <NuxtLink v-if="auth.isLoggedIn" to="/profile">
+          <AppButton size="md">Личный кабинет</AppButton>
         </NuxtLink>
-        <NuxtLink v-else to="/login" class="header__login">
-          <AppButton size="sm">Войти</AppButton>
-        </NuxtLink>
-        <button
-          type="button"
-          class="header__burger"
-          :aria-expanded="menuOpen"
-          aria-label="Меню"
-          @click="menuOpen = !menuOpen"
-        >
-          <Menu v-if="!menuOpen" :size="24" />
-          <X v-else :size="24" />
-        </button>
+        <template v-else>
+          <NuxtLink to="/login"><AppButton variant="ghost" size="md">Войти</AppButton></NuxtLink>
+          <NuxtLink to="/register"><AppButton size="md">Регистрация</AppButton></NuxtLink>
+        </template>
       </div>
+
+      <button
+        type="button"
+        class="header__burger"
+        :aria-expanded="menuOpen"
+        aria-label="Меню"
+        @click="menuOpen = true"
+      >
+        <Menu :size="20" />
+      </button>
     </div>
+
+    <Teleport to="body">
+      <Transition name="menu">
+        <div v-if="menuOpen" class="menu">
+          <div class="menu__top">
+            <NuxtLink to="/" class="header__logo" @click="menuOpen = false">
+              <span class="header__logo-mark"><Trees :size="19" /></span>
+              <span class="header__logo-text">Яринг</span>
+            </NuxtLink>
+            <button type="button" class="header__burger" aria-label="Закрыть" @click="menuOpen = false">
+              <X :size="20" />
+            </button>
+          </div>
+          <nav class="menu__nav">
+            <NuxtLink
+              v-for="link in navLinks"
+              :key="link.to"
+              :to="link.to"
+              class="menu__link"
+              @click="menuOpen = false"
+            >
+              {{ link.label }}
+            </NuxtLink>
+          </nav>
+          <div class="menu__footer">
+            <div class="menu__theme"><ThemeToggle /></div>
+            <NuxtLink v-if="auth.isAdmin" to="/admin" @click="menuOpen = false">
+              <AppButton variant="secondary" size="lg" block>Админка</AppButton>
+            </NuxtLink>
+            <NuxtLink v-if="auth.isLoggedIn" to="/profile" @click="menuOpen = false">
+              <AppButton size="lg" block>Личный кабинет</AppButton>
+            </NuxtLink>
+            <template v-else>
+              <NuxtLink to="/register" @click="menuOpen = false">
+                <AppButton size="lg" block>Регистрация</AppButton>
+              </NuxtLink>
+              <NuxtLink to="/login" @click="menuOpen = false">
+                <AppButton variant="secondary" size="lg" block>Войти</AppButton>
+              </NuxtLink>
+            </template>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </header>
 </template>
 
 <script setup lang="ts">
-import { Trees, User, Menu, X } from 'lucide-vue-next';
+import { Trees, Menu, X } from 'lucide-vue-next';
 
 const auth = useAuthStore();
 const menuOpen = ref(false);
+const route = useRoute();
 
 const navLinks = [
   { to: '/', label: 'Главная' },
@@ -70,6 +101,16 @@ const navLinks = [
   { to: '/rules', label: 'Правила' },
   { to: '/contacts', label: 'Контакты' },
 ];
+
+watch(() => route.fullPath, () => { menuOpen.value = false; });
+
+watch(menuOpen, (open) => {
+  if (import.meta.client) document.body.style.overflow = open ? 'hidden' : '';
+});
+
+onUnmounted(() => {
+  if (import.meta.client) document.body.style.overflow = '';
+});
 </script>
 
 <style scoped lang="scss">
@@ -77,183 +118,93 @@ const navLinks = [
   position: sticky;
   top: 0;
   z-index: 50;
-  background: transparent;
-  padding: $space-3 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
 
   &__inner {
     @include container;
     height: var(--header-height);
-    display: grid;
-    grid-template-columns: auto 1fr auto;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: $space-4;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-elevated);
-    backdrop-filter: blur(16px);
-
-    [data-theme='dark'] & {
-      background: rgba(26, 36, 32, 0.9);
-    }
-
-    @include md {
-      grid-template-columns: auto 1fr auto;
-    }
   }
 
   &__logo {
     display: flex;
     align-items: center;
-    gap: $space-2;
-    font-size: var(--font-lg);
-    font-weight: 800;
-    color: var(--color-primary);
+    gap: $space-2 + 1px;
     text-decoration: none;
+    color: var(--color-text);
 
     &:hover {
       text-decoration: none;
-      opacity: 0.85;
     }
+  }
+
+  &__logo-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    flex: none;
+
+    @include md {
+      width: 34px;
+      height: 34px;
+    }
+  }
+
+  &__logo-text {
+    font-weight: 800;
+    font-size: var(--font-lg);
+    letter-spacing: -0.01em;
   }
 
   &__nav {
     display: none;
     align-items: center;
-    justify-content: center;
-    gap: $space-6;
+    gap: $space-1;
 
     @include md {
       display: flex;
-    }
-
-    &--open {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      position: fixed;
-      top: calc(var(--header-height) + #{$space-6});
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: var(--color-surface);
-      padding: $space-5 var(--space-page-x);
-      gap: $space-2;
-      overflow-y: auto;
-      z-index: 40;
-
-      @include md {
-        position: static;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        overflow: visible;
-        background: transparent;
-        inset: auto;
-      }
-    }
-  }
-
-  &__nav-mobile {
-    display: flex;
-    flex-direction: column;
-    gap: $space-3;
-    margin-top: $space-5;
-    padding-top: $space-5;
-    border-top: 1px solid var(--color-border);
-
-    @include md {
-      display: none;
     }
   }
 
   &__link {
-    position: relative;
+    padding: $space-2 + 1px $space-4;
+    border-radius: 10px;
+    font-size: $font-size-base;
+    font-weight: 500;
     color: var(--color-text-secondary);
     text-decoration: none;
-    font-size: var(--font-sm);
-    font-weight: 500;
-    padding: $space-2 0;
-    white-space: nowrap;
-
-    @include md {
-      padding: $space-2 0;
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 2px;
-      background: var(--color-primary);
-      border-radius: 2px;
-      transform: scaleX(0);
-      transition: transform $transition;
-    }
-
-    &:hover {
-      color: var(--color-primary);
-      text-decoration: none;
-    }
-
-    &.router-link-exact-active {
-      color: var(--color-primary);
-      text-decoration: none;
-
-      &::after {
-        transform: scaleX(1);
-      }
-    }
-
-    &--admin {
-      display: none;
-
-      @include sm {
-        display: inline;
-      }
-    }
-  }
-
-  &__actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: $space-2;
-
-    @include md {
-      gap: $space-3;
-    }
-  }
-
-  &__theme {
-    display: none;
-
-    @include md {
-      display: flex;
-    }
-  }
-
-  &__profile {
-    color: var(--color-text);
-    display: flex;
-    padding: $space-2;
-    border-radius: var(--radius-md);
+    transition:
+      background $transition,
+      color $transition;
 
     &:hover {
       background: var(--color-surface-elevated);
       text-decoration: none;
     }
+
+    &.router-link-exact-active {
+      color: var(--color-primary);
+      font-weight: 600;
+      background: var(--color-primary-tint);
+    }
   }
 
-  &__login {
+  &__actions {
     display: none;
-    text-decoration: none;
+    align-items: center;
+    gap: $space-2;
 
-    @include sm {
-      display: inline-flex;
+    @include md {
+      display: flex;
     }
   }
 
@@ -263,9 +214,9 @@ const navLinks = [
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: var(--color-surface-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border: none;
+    border-radius: 10px;
+    background: transparent;
     color: var(--color-text);
     cursor: pointer;
 
@@ -273,5 +224,74 @@ const navLinks = [
       display: none;
     }
   }
+}
+
+.menu {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+
+  &__top {
+    height: var(--header-height);
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-page-x);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  &__nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $space-2;
+    padding: $space-5;
+  }
+
+  &__link {
+    padding: $space-3;
+    font-size: var(--font-2xl);
+    font-weight: 600;
+    color: var(--color-text);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: none;
+    }
+
+    &.router-link-exact-active {
+      color: var(--color-primary);
+      font-weight: 700;
+    }
+  }
+
+  &__footer {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+    padding: $space-5 var(--space-page-x);
+    border-top: 1px solid var(--color-border);
+  }
+
+  &__theme {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.menu-enter-active,
+.menu-leave-active {
+  transition: opacity 0.2s ease;
+}
+.menu-enter-from,
+.menu-leave-to {
+  opacity: 0;
 }
 </style>
