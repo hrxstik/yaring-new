@@ -6,6 +6,8 @@ const stylesDir = fileURLToPath(new URL('./app/assets/styles', import.meta.url))
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  // Bind the dev server explicitly to 127.0.0.1 so localhost:3000 is reachable.
+  devServer: { host: '127.0.0.1', port: 3000 },
   modules: ['@pinia/nuxt'],
   css: ['~/assets/styles/main.scss'],
   components: [
