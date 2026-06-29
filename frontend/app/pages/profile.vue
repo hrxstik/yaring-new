@@ -22,6 +22,7 @@
       message="Бронирование успешно оплачено!"
     />
     <AppAlert v-if="actionError" variant="error" :message="actionError" />
+    <AppAlert v-if="actionSuccess" variant="success" :message="actionSuccess" />
 
     <section class="card">
       <h3 class="card__title">Профиль</h3>
@@ -93,7 +94,7 @@
               v-if="booking.status === 'confirmed'"
               size="sm"
               variant="ghost"
-              @click="cancelBooking(booking.id)"
+              @click="openCancel(booking)"
             >
               Отменить
             </AppButton>
@@ -101,11 +102,35 @@
         </article>
       </div>
     </section>
+
+    <AppDrawer :open="!!cancelTarget" title="" @close="cancelTarget = null">
+      <div class="cancel">
+        <span class="cancel__icon"><AlertTriangle :size="28" /></span>
+        <h3 class="cancel__title">Отменить бронь?</h3>
+        <p class="cancel__text">
+          Бронирование <b>«{{ cancelTarget?.entityName }}»</b> будет отменено.
+          Это действие нельзя отменить.
+        </p>
+        <div class="cancel__box">
+          <span class="cancel__row"><Calendar :size="15" />{{ cancelWhen }}</span>
+          <span class="cancel__row">
+            <Banknote :size="15" />Возврат до {{ (cancelTarget?.totalPrice ?? 0).toLocaleString('ru-RU') }} ₽ на счёт за 3–5 дней
+          </span>
+        </div>
+        <AppAlert v-if="cancelError" variant="error" :message="cancelError" />
+      </div>
+      <template #footer>
+        <AppButton variant="secondary" block @click="cancelTarget = null">Не отменять</AppButton>
+        <AppButton variant="danger" block :loading="cancelling" @click="confirmCancel">
+          Отменить бронь
+        </AppButton>
+      </template>
+    </AppDrawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ChevronRight, LogOut, CalendarX } from 'lucide-vue-next';
+import { ChevronRight, LogOut, CalendarX, AlertTriangle, Calendar, Banknote } from 'lucide-vue-next';
 import type { Booking } from '~/types';
 import { formatRange, formatDateRu, BOOKING_STATUS_LABELS } from '~/utils/calendar';
 
@@ -121,7 +146,21 @@ const bookings = ref<Booking[]>([]);
 const loading = ref(true);
 const loadError = ref<string | null>(null);
 const actionError = ref<string | null>(null);
+const actionSuccess = ref<string | null>(null);
 const payingId = ref<string | null>(null);
+
+const cancelTarget = ref<Booking | null>(null);
+const cancelling = ref(false);
+const cancelError = ref<string | null>(null);
+
+const cancelWhen = computed(() => {
+  const b = cancelTarget.value;
+  if (!b) return '';
+  if (b.bookingType === 'hourly') {
+    return `${formatDateRu(b.startDate)} · ${b.startTime}–${b.endTime}`;
+  }
+  return formatRange(b.startDate, b.endDate);
+});
 
 const editName = ref(auth.user?.name ?? '');
 const savingProfile = ref(false);
@@ -231,21 +270,27 @@ async function payBooking(booking: Booking) {
   }
 }
 
-async function cancelBooking(id: string) {
-  if (!confirm('Отменить бронирование?\nВозврат рассчитывается по политике отмены.')) return;
+function openCancel(booking: Booking) {
+  cancelTarget.value = booking;
+  cancelError.value = null;
+}
 
-  actionError.value = null;
+async function confirmCancel() {
+  if (!cancelTarget.value) return;
+  cancelling.value = true;
+  cancelError.value = null;
   try {
     const result = await request<{ refundAmount: number; message: string }>(
-      `/bookings/${id}/cancel-refund`,
+      `/bookings/${cancelTarget.value.id}/cancel-refund`,
       { method: 'POST' },
     );
+    cancelTarget.value = null;
+    actionSuccess.value = result.refundAmount > 0 ? result.message : 'Бронирование отменено';
     await loadBookings();
-    if (result.refundAmount > 0) {
-      alert(result.message);
-    }
   } catch (e) {
-    actionError.value = formatApiError(e);
+    cancelError.value = formatApiError(e);
+  } finally {
+    cancelling.value = false;
   }
 }
 </script>
@@ -404,6 +449,66 @@ async function cancelBooking(id: string) {
       align-items: flex-end;
       padding-top: 0;
       border-top: none;
+    }
+  }
+}
+
+.cancel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-4;
+  text-align: center;
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: $radius-full;
+    background: var(--status-cancelled-bg);
+    color: var(--color-danger);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: var(--font-xl);
+    font-weight: 800;
+  }
+
+  &__text {
+    margin: 0;
+    font-size: $font-size-sm;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+
+    b {
+      color: var(--color-text);
+    }
+  }
+
+  &__box {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+    padding: $space-3 + 2px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-align: left;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: $space-2 + 2px;
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+
+    svg {
+      color: var(--color-primary);
+      flex: none;
     }
   }
 }
