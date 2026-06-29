@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { CalendarCheck, House, Shield, Leaf, Map, Trees, Users } from 'lucide-vue-next';
+import { CalendarCheck, House, Shield, Leaf, Map as MapIcon, Trees, Users } from 'lucide-vue-next';
 import type { BookableEntity } from '~/types';
 
 useHead({ title: 'База отдыха «Яринг»' });
@@ -77,7 +77,7 @@ const entitiesLoading = ref(true);
 const stats = [
   { icon: House, value: '3+', label: 'объектов для отдыха' },
   { icon: CalendarCheck, value: '24/7', label: 'онлайн-бронирование' },
-  { icon: Map, value: '15 га', label: 'благоустроенной территории' },
+  { icon: MapIcon, value: '15 га', label: 'благоустроенной территории' },
 ];
 
 const features = [
