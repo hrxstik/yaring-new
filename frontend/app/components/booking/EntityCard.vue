@@ -1,9 +1,15 @@
 <template>
   <article class="entity-card">
     <div class="entity-card__image">
-      <img v-if="imageSrc" :src="imageSrc" :alt="entity.name" loading="lazy" />
+      <img
+        v-if="imageSrc && !broken"
+        :src="imageSrc"
+        :alt="entity.name"
+        loading="lazy"
+        @error="broken = true"
+      />
       <div v-else class="entity-card__placeholder">
-        <Home :size="48" />
+        <span class="entity-card__placeholder-label">фото · {{ entity.name }}</span>
       </div>
     </div>
     <div class="entity-card__body">
@@ -29,7 +35,6 @@ import {
   Car,
   DoorOpen,
   Flame,
-  Home,
   Lamp,
   ShowerHead,
   TreePine,
@@ -48,11 +53,16 @@ const placeholders: Record<string, string> = {
   besedka: '/entity-gazebo.png',
 };
 
+const broken = ref(false);
+
 const imageSrc = computed(() => {
   const url = props.entity.imageUrl;
   if (url && (url.startsWith('http') || url.startsWith('/'))) return url;
   return placeholders[props.entity.slug] ?? null;
 });
+
+// Reset the broken flag if the entity (and thus its image) changes.
+watch(imageSrc, () => { broken.value = false; });
 
 const priceAmount = computed(() => {
   const value =
@@ -112,11 +122,17 @@ function amenityIcon(item: string) {
   }
 
   &__placeholder {
+    @include photo-placeholder;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  }
+
+  &__placeholder-label {
+    font-family: monospace;
+    font-size: $font-size-xs;
     color: var(--color-text-muted);
+    background: var(--color-surface);
+    padding: $space-1 $space-3;
+    border-radius: $radius-full;
   }
 
   &__body {

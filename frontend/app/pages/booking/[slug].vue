@@ -21,8 +21,13 @@
 
       <div class="entity-detail__layout">
         <div class="entity-detail__media">
-          <img v-if="imageSrc" :src="imageSrc" :alt="entity.name" />
-          <span v-else class="entity-detail__placeholder">фото объекта</span>
+          <img
+            v-if="imageSrc && !imageBroken"
+            :src="imageSrc"
+            :alt="entity.name"
+            @error="imageBroken = true"
+          />
+          <span v-else class="entity-detail__placeholder">фото · {{ entity.name }}</span>
         </div>
 
         <div class="entity-detail__info">
@@ -146,6 +151,8 @@ const placeholders: Record<string, string> = {
   banya: '/entity-sauna.png',
   besedka: '/entity-gazebo.png',
 };
+
+const imageBroken = ref(false);
 
 const imageSrc = computed(() => {
   if (!entity.value) return null;
